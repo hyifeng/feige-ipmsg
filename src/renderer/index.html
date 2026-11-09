@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'none';" />
+  <title>飞鸽 · 局域网快传</title>
+  <link rel="stylesheet" href="styles/base.css" />
+  <link rel="stylesheet" href="styles/sidebar.css" />
+  <link rel="stylesheet" href="styles/chat.css" />
+  <link rel="stylesheet" href="styles/transfers.css" />
+  <link rel="stylesheet" href="styles/modals.css" />
+  <link rel="stylesheet" href="styles/overlays.css" />
+  <link rel="stylesheet" href="styles/responsive.css" />
+  <link rel="stylesheet" href="styles/history.css" />
+  <link rel="stylesheet" href="styles/images.css" />
+  <link rel="stylesheet" href="styles/secure.css" />
+  <link rel="stylesheet" href="styles/lock.css" />
+</head>
+<body class="is-locked">
+  <div class="lock-screen" id="lockScreen">
+    <div class="lock-glow" aria-hidden="true"></div>
+    <div class="lock-card lock-loading" role="status" aria-live="polite">
+      <div class="lock-emblem" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="5" y="10" width="14" height="10" rx="2.5" />
+          <path d="M8 10V7.5a4 4 0 0 1 8 0V10" />
+          <path d="M12 14v2" />
+        </svg>
+      </div>
+      <div class="lock-brand">飞鸽 <span>LOCAL VAULT</span></div>
+      <div class="lock-spinner" aria-hidden="true"></div>
+      <p class="lock-loading-text">正在检查本地资料…</p>
+    </div>
+  </div>
+  <div class="app" id="app">
+    <aside class="sidebar">
+      <header class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 48 48" fill="none">
+            <defs>
+              <linearGradient id="brandGrad" x1="6" y1="4" x2="42" y2="46" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#5eead4" />
+                <stop offset=".55" stop-color="#38bdf8" />
+                <stop offset="1" stop-color="#818cf8" />
+              </linearGradient>
+            </defs>
+            <rect width="48" height="48" rx="14" fill="url(#brandGrad)" />
+            <path d="M37 11 11.5 22.4l9.3 3.2 2.6 9.6 4.8-7.6 7.3 3.9L37 11Z" fill="#fff" fill-opacity=".96" />
+            <path d="m20.8 25.6 10.4-7.8-6.8 10.3-.7-2.1-2.9-.4Z" fill="#0b3b48" fill-opacity=".24" />
+          </svg>
+        </div>
+        <div class="brand-text">
+          <div class="brand-name">飞鸽</div>
+          <div class="brand-sub">LAN&nbsp;·&nbsp;TRANSFER</div>
+        </div>
+        <div class="brand-pulse" id="brandPulse" title="在线"></div>
+      </header>
+
+      <button class="self-card" id="selfCard" title="打开设置">
+        <span class="avatar avatar-lg" id="selfAvatar">飞</span>
+        <span class="self-info">
+          <span class="self-name" id="selfName">飞鸽用户</span>
+          <span class="self-meta" id="selfMeta">正在启动…</span>
+        </span>
+        <span class="self-edit ico" data-icon="settings" data-size="16"></span>
+      </button>
+
+      <div class="search-wrap">
+        <span class="search-ico ico" data-icon="search" data-size="17"></span>
+        <input id="peerSearch" type="text" placeholder="搜索别名 / 指纹 / IP" autocomplete="off" spellcheck="false" />
+        <kbd class="search-kbd">/</kbd>
+      </div>
+
+      <div class="peer-list" id="peerList"></div>
+
+      <footer class="sidebar-footer">
+        <button class="transfer-toggle" id="transferToggle">
+          <span class="ico" data-icon="inbox" data-size="18"></span>
+          <span>传输中心</span>
+          <span class="badge is-hidden" id="transferBadge">0</span>
+          <span class="chev ico" data-icon="chevron-right" data-size="15"></span>
+        </button>
+        <div class="footer-actions">
+          <button class="icon-btn" id="historyBtn" title="聊天记录"><span class="ico" data-icon="clock" data-size="18"></span></button>
+          <button class="icon-btn" id="themeBtn" title="切换主题"><span class="ico" data-icon="moon" data-size="18"></span></button>
+          <button class="icon-btn" id="settingsBtn" title="设置"><span class="ico" data-icon="settings" data-size="18"></span></button>
+        </div>
+      </footer>
+    </aside>
+
+    <main class="main">
+      <section class="welcome" id="welcome">
+        <div class="welcome-bg"></div>
+        <svg class="flight-art" viewBox="0 0 260 180" fill="none" aria-hidden="true">
+          <defs>
+            <linearGradient id="planeGrad" x1="80" y1="42" x2="180" y2="140" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#5eead4" />
+              <stop offset=".55" stop-color="#38bdf8" />
+              <stop offset="1" stop-color="#a5b4fc" />
+            </linearGradient>
+            <radialGradient id="glowGrad" cx="0" cy="0" r="1" gradientTransform="translate(130 94) rotate(90) scale(92)">
+              <stop stop-color="#2dd4bf" stop-opacity=".2" />
+              <stop offset="1" stop-color="#2dd4bf" stop-opacity="0" />
+            </radialGradient>
+          </defs>
+          <circle cx="130" cy="94" r="90" fill="url(#glowGrad)" />
+          <circle cx="130" cy="94" r="66" stroke="rgba(148,163,184,.16)" stroke-dasharray="3 8" />
+          <circle cx="130" cy="94" r="92" stroke="rgba(148,163,184,.07)" />
+          <path class="flight-path" d="M28 142c27-11 39-46 65-57 32-13 46 17 78 0 19-10 32-30 60-41" stroke="url(#planeGrad)" stroke-width="1.6" stroke-dasharray="4 9" opacity=".5" />
+          <g class="plane">
+            <path d="M176 44 94 88l36 10 14 32 12-26 26 14-6-74Z" fill="url(#planeGrad)" />
+            <path d="m130 98 46-54-32 68-2-16-12 2Z" fill="#fff" opacity=".3" />
+          </g>
+          <circle cx="57" cy="60" r="2.5" fill="#5eead4" opacity=".85" />
+          <circle cx="209" cy="126" r="2" fill="#a5b4fc" opacity=".75" />
+          <circle cx="224" cy="62" r="1.5" fill="#38bdf8" opacity=".85" />
+        </svg>
+        <h1>让文件，<span class="grad">飞</span>过去</h1>
+        <p class="welcome-sub">同一局域网自动发现 · 无需服务器 · 消息与文件夹极速直达</p>
+        <div class="feature-row">
+          <div class="feature">
+            <span class="feature-ico"><span class="ico" data-icon="radar" data-size="19"></span></span>
+            <b>自动发现</b>
+            <small>启动即见同事</small>
+          </div>
+          <div class="feature">
+            <span class="feature-ico"><span class="ico" data-icon="zap" data-size="19"></span></span>
+            <b>极速直传</b>
+            <small>局域网满速</small>
+          </div>
+          <div class="feature">
+            <span class="feature-ico"><span class="ico" data-icon="folder" data-size="19"></span></span>
+            <b>整夹发送</b>
+            <small>目录结构保留</small>
+          </div>
+        </div>
+        <div class="welcome-hint"><span class="pulse-dot"></span><span id="welcomeHint">正在寻找同一网段的设备…</span></div>
+      </section>
+
+      <section class="chat is-hidden" id="chat">
+        <header class="chat-head">
+          <span class="avatar" id="chatAvatar">?</span>
+          <div class="chat-peer">
+            <div class="chat-name-row">
+              <h2 id="chatName">—</h2>
+              <span class="pill" id="chatStatus">在线</span>
+            </div>
+            <div class="chat-meta" id="chatMeta">—</div>
+          </div>
+          <div class="chat-actions">
+            <button class="action-btn alias-action is-hidden" id="chatAliasBtn" title="设置本地别名"><span class="ico" data-icon="edit" data-size="17"></span><span>命名</span></button>
+            <button class="action-btn secure-action" id="secureBtn" title="核对 6 位码认证身份"><span class="ico" data-icon="shield" data-size="17"></span><span id="secureBtnLabel">认证身份</span></button>
+            <button class="action-btn" id="sendFileBtn"><span class="ico" data-icon="paperclip" data-size="17"></span><span>发送文件</span></button>
+            <button class="action-btn" id="sendFolderBtn"><span class="ico" data-icon="folder-plus" data-size="17"></span><span>发送文件夹</span></button>
+            <button class="icon-btn" id="chatTransferBtn" title="传输中心"><span class="ico" data-icon="inbox" data-size="19"></span></button>
+          </div>
+        </header>
+
+        <div class="secure-banner is-hidden" id="secureBanner">
+          <span class="secure-banner-icon ico" id="secureBannerIcon"></span>
+          <div class="secure-banner-text">
+            <b id="secureBannerTitle"></b>
+            <span id="secureBannerText"></span>
+          </div>
+          <button class="secure-banner-btn" id="secureBannerBtn"></button>
+        </div>
+
+        <div class="messages" id="messages"></div>
+
+        <div class="composer-wrap">
+          <div class="composer" id="composer">
+            <button class="attach-btn" id="attachImageBtn" title="发送图片"><span class="ico" data-icon="image" data-size="19"></span></button>
+            <button class="attach-btn" id="attachFileBtn" title="发送文件"><span class="ico" data-icon="paperclip" data-size="19"></span></button>
+            <button class="attach-btn" id="attachFolderBtn" title="发送文件夹"><span class="ico" data-icon="folder-plus" data-size="19"></span></button>
+            <textarea id="messageInput" rows="1" placeholder="写点什么…  Enter 发送，Shift + Enter 换行"></textarea>
+            <button class="send-btn" id="sendBtn" title="发送"><span class="ico" data-icon="send" data-size="19"></span></button>
+          </div>
+          <div class="composer-hint">
+            <span id="composerHint">Enter 发送 · Shift + Enter 换行 · 可直接拖入文件</span>
+            <span class="mono" id="peerAddress"></span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div class="panel-scrim" id="panelScrim"></div>
+    <aside class="transfer-panel" id="transferPanel">
+      <header class="panel-head">
+        <div>
+          <h2>传输中心</h2>
+          <p id="transferSummary">暂无传输</p>
+        </div>
+        <button class="icon-btn" id="closeTransfers" title="关闭"><span class="ico" data-icon="x" data-size="18"></span></button>
+      </header>
+      <div class="panel-body" id="transferList"></div>
+    </aside>
+
+    <div class="drop-overlay is-hidden" id="dropOverlay">
+      <div class="drop-card">
+        <span class="drop-ico ico" data-icon="upload" data-size="34"></span>
+        <b>松开发送</b>
+        <span id="dropText">文件将直接发送给对方</span>
+      </div>
+    </div>
+
+    <div id="modalRoot"></div>
+    <div class="toasts" id="toastRoot"></div>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,241 @@
+/* ============================================================
+   聊天记录 / 历史联系人
+   ============================================================ */
+
+.load-earlier-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 4px 0 18px;
+}
+
+.load-earlier {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 10.5px;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+}
+
+.load-earlier:hover {
+  color: var(--text);
+  background: var(--surface-hover);
+  border-color: var(--line-strong);
+}
+
+.peer.history .peer-sub {
+  color: var(--faint);
+  font-family: var(--font);
+  font-size: 10.5px;
+}
+
+.avatar-sm {
+  width: 34px;
+  height: 34px;
+  font-size: 12px;
+}
+
+.history-modal {
+  width: min(560px, calc(100vw - 48px));
+}
+
+.history-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.history-search .ico {
+  position: absolute;
+  left: 12px;
+  color: var(--faint);
+  pointer-events: none;
+}
+
+.history-search input {
+  width: 100%;
+  height: 41px;
+  padding: 0 13px 0 38px;
+  font-size: 12.5px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  outline: none;
+  transition: border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
+}
+
+.history-search input::placeholder {
+  color: var(--faint);
+}
+
+.history-search input:focus {
+  background: var(--surface-hover);
+  border-color: var(--accent-line);
+  box-shadow: 0 0 0 3px rgba(46, 230, 184, 0.07);
+}
+
+.history-results {
+  min-height: 190px;
+  max-height: min(430px, 48vh);
+  padding: 4px;
+  overflow-y: auto;
+  background: rgba(148, 163, 184, 0.03);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+
+.history-section {
+  padding: 10px 10px 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--faint);
+  text-transform: uppercase;
+}
+
+.history-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  text-align: left;
+  color: inherit;
+  border-radius: 11px;
+  transition: background 0.15s ease;
+}
+
+.history-row:hover {
+  background: var(--surface-hover);
+}
+
+.history-row-main {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.history-row-name {
+  overflow: hidden;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-row-sub {
+  overflow: hidden;
+  font-size: 10.5px;
+  color: var(--faint);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-row-time {
+  flex: none;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  color: var(--faint);
+}
+
+.history-result {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 11px;
+  text-align: left;
+  color: inherit;
+  border-radius: 10px;
+  transition: background 0.15s ease;
+}
+
+.history-result:hover {
+  background: var(--surface-hover);
+}
+
+.history-result-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  color: var(--faint);
+}
+
+.history-result-head b {
+  overflow: hidden;
+  font-family: var(--font);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-2);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-result-text {
+  overflow: hidden;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--text-2);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 42px 20px;
+  color: var(--faint);
+  text-align: center;
+}
+
+.history-empty .ico {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  margin-bottom: 3px;
+  place-items: center;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px dashed var(--line-strong);
+  border-radius: 14px;
+}
+
+.history-empty b {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.history-empty small {
+  font-size: 10.5px;
+}
+
+.history-actions {
+  flex-wrap: wrap;
+}
+
+.history-hint {
+  flex: 1;
+  min-width: 180px;
+  font-size: 9.5px;
+  color: var(--faint);
+  text-align: left;
+}
+
+.history-clear.armed {
+  background: rgba(251, 113, 133, 0.2);
+  border-color: rgba(251, 113, 133, 0.36);
+}

@@ -1,0 +1,407 @@
+/* ============================================================
+   本地密码锁屏
+   ============================================================ */
+
+body.is-locked {
+  overflow: hidden;
+}
+
+body.is-locked .app {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.lock-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  padding: 30px;
+  overflow: auto;
+  place-items: center;
+  background:
+    radial-gradient(960px 660px at 16% 4%, rgba(46, 230, 184, 0.16), transparent 60%),
+    radial-gradient(860px 620px at 92% 96%, rgba(139, 140, 248, 0.18), transparent 62%),
+    radial-gradient(720px 540px at 62% 38%, rgba(56, 189, 248, 0.08), transparent 62%),
+    var(--bg);
+}
+
+html[data-theme="light"] .lock-screen {
+  background:
+    radial-gradient(900px 620px at 14% -4%, rgba(45, 212, 191, 0.22), transparent 60%),
+    radial-gradient(860px 620px at 96% 100%, rgba(129, 140, 248, 0.18), transparent 62%),
+    radial-gradient(720px 540px at 60% 36%, rgba(56, 189, 248, 0.1), transparent 62%),
+    var(--bg);
+}
+
+.lock-glow {
+  position: absolute;
+  width: 520px;
+  height: 520px;
+  border: 1px solid rgba(148, 163, 184, 0.09);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 54px rgba(148, 163, 184, 0.025),
+    0 0 0 108px rgba(148, 163, 184, 0.016);
+  pointer-events: none;
+}
+
+.lock-card {
+  position: relative;
+  width: min(432px, calc(100vw - 48px));
+  padding: 32px;
+  text-align: center;
+  background: linear-gradient(180deg, rgba(19, 29, 50, 0.98), rgba(11, 18, 32, 0.99));
+  border: 1px solid var(--line-strong);
+  border-radius: 26px;
+  box-shadow: var(--shadow);
+  animation: popIn 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+html[data-theme="light"] .lock-card {
+  background: linear-gradient(180deg, #ffffff, #f7fbff);
+}
+
+.lock-loading {
+  width: min(360px, calc(100vw - 48px));
+  padding: 38px 32px 34px;
+}
+
+.lock-emblem {
+  display: grid;
+  width: 66px;
+  height: 66px;
+  margin: 0 auto 16px;
+  place-items: center;
+  color: #04231f;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  border-radius: 21px;
+  box-shadow: 0 14px 34px rgba(46, 230, 184, 0.26);
+}
+
+.lock-emblem svg {
+  width: 30px;
+  height: 30px;
+}
+
+.lock-emblem.warn {
+  color: #2a1304;
+  background: linear-gradient(135deg, #fbbf24, #fb7185);
+  box-shadow: 0 14px 34px rgba(251, 113, 133, 0.22);
+}
+
+.lock-brand {
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.lock-brand span {
+  display: inline-block;
+  margin-left: 7px;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  color: var(--faint);
+  vertical-align: 2px;
+}
+
+.lock-card h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 680;
+  letter-spacing: 0.01em;
+}
+
+.lock-subtitle {
+  margin: 9px auto 0;
+  max-width: 330px;
+  font-size: 12px;
+  line-height: 1.65;
+  color: var(--muted);
+}
+
+.lock-form {
+  display: grid;
+  gap: 13px;
+  margin-top: 24px;
+  text-align: left;
+}
+
+.lock-field {
+  display: grid;
+  gap: 7px;
+}
+
+.lock-field > span {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.lock-input-wrap {
+  position: relative;
+}
+
+.lock-input-wrap input {
+  width: 100%;
+  height: 46px;
+  padding: 0 46px 0 14px;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  outline: none;
+  transition: border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
+}
+
+.lock-input-wrap input:hover {
+  background: var(--surface-hover);
+}
+
+.lock-input-wrap input:focus {
+  background: var(--surface-hover);
+  border-color: var(--accent-line);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.lock-input-wrap input::placeholder {
+  color: var(--faint);
+}
+
+.lock-toggle {
+  position: absolute;
+  top: 50%;
+  right: 7px;
+  display: grid;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  place-items: center;
+  color: var(--muted);
+  border-radius: 8px;
+  transform: translateY(-50%);
+}
+
+.lock-toggle svg {
+  display: block;
+}
+
+.lock-toggle:hover {
+  color: var(--text);
+  background: var(--surface-strong);
+}
+
+.lock-remember {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 12px;
+  cursor: pointer;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  user-select: none;
+  transition: background 0.16s ease, border-color 0.16s ease;
+}
+
+.lock-remember:hover {
+  background: var(--surface-hover);
+  border-color: var(--line-strong);
+}
+
+.lock-remember input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.lock-remember-box {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  flex: none;
+  margin-top: 1px;
+  background: var(--surface-strong);
+  border: 1px solid var(--line-strong);
+  border-radius: 5px;
+  transition: background 0.16s ease, border-color 0.16s ease;
+}
+
+.lock-remember input:checked + .lock-remember-box {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  border-color: transparent;
+}
+
+.lock-remember input:checked + .lock-remember-box::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 5px;
+  width: 5px;
+  height: 9px;
+  border: solid #04231f;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.lock-remember input:focus-visible + .lock-remember-box {
+  outline: 2px solid var(--accent-line);
+  outline-offset: 2px;
+}
+
+.lock-remember input:disabled ~ * {
+  opacity: 0.55;
+}
+
+.lock-remember-text b {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.lock-remember-text small {
+  display: block;
+  margin-top: 3px;
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--faint);
+}
+
+.lock-note {
+  padding: 8px 10px;
+  margin-top: -2px;
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+}
+
+.lock-error {
+  min-height: 18px;
+  margin: -2px 0 -2px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--danger);
+}
+
+.lock-error:empty {
+  visibility: hidden;
+}
+
+.lock-submit {
+  width: 100%;
+  height: 46px;
+  margin-top: 2px;
+  font-size: 13.5px;
+  border-radius: 12px;
+}
+
+.lock-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 19px;
+  padding-top: 16px;
+  font-size: 10.5px;
+  line-height: 1.55;
+  color: var(--faint);
+  text-align: left;
+  border-top: 1px solid var(--line);
+}
+
+.lock-hint .ico {
+  margin-top: 1px;
+  color: var(--accent);
+}
+
+.lock-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.lock-badge {
+  padding: 4px 8px;
+  font-size: 9.5px;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+
+.lock-spinner {
+  width: 22px;
+  height: 22px;
+  margin: 22px auto 12px;
+  border: 2px solid var(--line-strong);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: lockSpin 0.8s linear infinite;
+}
+
+.lock-loading-text {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.lock-card.shake {
+  animation: lockShake 0.34s ease;
+}
+
+@keyframes lockSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes lockShake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-7px);
+  }
+  40% {
+    transform: translateX(6px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(3px);
+  }
+}
+
+@media (max-height: 680px) {
+  .lock-card {
+    padding: 24px;
+  }
+
+  .lock-emblem {
+    width: 56px;
+    height: 56px;
+    margin-bottom: 12px;
+  }
+
+  .lock-form {
+    margin-top: 18px;
+  }
+
+  .lock-hint {
+    margin-top: 14px;
+    padding-top: 12px;
+  }
+}

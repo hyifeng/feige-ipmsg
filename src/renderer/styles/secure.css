@@ -1,0 +1,440 @@
+/* ============================================================
+   端到端加密
+   ============================================================ */
+
+.secure-action.active {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+}
+
+.secure-action.pending {
+  color: var(--warn);
+  background: rgba(251, 191, 36, 0.08);
+  border-color: rgba(251, 191, 36, 0.22);
+}
+
+.secure-action.paired:not(.active) {
+  color: var(--accent-2);
+}
+
+.chat.secure-active .chat-head {
+  border-bottom-color: rgba(46, 230, 184, 0.28);
+  box-shadow: inset 0 -1px 0 rgba(46, 230, 184, 0.12);
+}
+
+.chat.secure-active .composer {
+  border-color: rgba(46, 230, 184, 0.24);
+}
+
+.chat.secure-active .composer:focus-within {
+  border-color: rgba(46, 230, 184, 0.48);
+  box-shadow: 0 0 0 3px rgba(46, 230, 184, 0.09), var(--shadow-soft);
+}
+
+.secure-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+  min-height: 38px;
+  padding: 7px 26px;
+  background: linear-gradient(90deg, rgba(46, 230, 184, 0.12), rgba(67, 185, 246, 0.045));
+  border-bottom: 1px solid rgba(46, 230, 184, 0.16);
+  animation: fadeIn 0.25s ease both;
+}
+
+.secure-banner.warning {
+  background: linear-gradient(90deg, rgba(251, 113, 133, 0.12), rgba(251, 191, 36, 0.045));
+  border-bottom-color: rgba(251, 113, 133, 0.18);
+}
+
+.secure-banner.unverified {
+  background: linear-gradient(90deg, rgba(251, 191, 36, 0.11), rgba(251, 191, 36, 0.025));
+  border-bottom-color: rgba(251, 191, 36, 0.2);
+}
+
+.secure-banner-icon {
+  color: var(--accent);
+}
+
+.secure-banner.warning .secure-banner-icon {
+  color: var(--danger);
+}
+
+.secure-banner.unverified .secure-banner-icon {
+  color: var(--warn);
+}
+
+.secure-banner-text {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.secure-banner-text b {
+  flex: none;
+  font-size: 11px;
+  font-weight: 650;
+  color: var(--text-2);
+}
+
+.secure-banner-text span {
+  overflow: hidden;
+  font-size: 10.5px;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.secure-banner-btn {
+  flex: none;
+  height: 25px;
+  padding: 0 10px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--accent);
+  background: rgba(46, 230, 184, 0.1);
+  border: 1px solid rgba(46, 230, 184, 0.18);
+  border-radius: 7px;
+  transition: background 0.16s ease;
+}
+
+.secure-banner-btn:hover {
+  background: rgba(46, 230, 184, 0.18);
+}
+
+.secure-banner.warning .secure-banner-btn {
+  color: var(--danger);
+  background: var(--danger-soft);
+  border-color: rgba(251, 113, 133, 0.2);
+}
+
+.secure-banner.unverified .secure-banner-btn {
+  color: var(--warn);
+  background: rgba(251, 191, 36, 0.1);
+  border-color: rgba(251, 191, 36, 0.24);
+}
+
+html[data-theme="light"] .secure-banner.unverified {
+  background: linear-gradient(90deg, rgba(180, 83, 9, 0.09), rgba(180, 83, 9, 0.02));
+  border-bottom-color: rgba(180, 83, 9, 0.18);
+}
+
+.peer-secure {
+  display: inline-flex;
+  flex: none;
+  color: var(--accent);
+  opacity: 0.9;
+}
+
+.peer-secure.paired {
+  color: var(--faint);
+  opacity: 0.7;
+}
+
+.secure-modal {
+  width: min(460px, calc(100vw - 48px));
+}
+
+.secure-code {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 94px;
+  margin: 6px 0 16px;
+  font-family: var(--mono);
+  font-size: clamp(34px, 6vw, 46px);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--text);
+  text-indent: 0.18em;
+  text-shadow: 0 0 26px rgba(46, 230, 184, 0.32);
+  background:
+    radial-gradient(220px 90px at 50% 50%, rgba(46, 230, 184, 0.14), transparent 70%),
+    var(--surface);
+  border: 1px solid var(--accent-line);
+  border-radius: 16px;
+}
+
+.secure-help {
+  margin: 0 0 12px;
+  font-size: 11.5px;
+  line-height: 1.8;
+  color: var(--muted);
+  text-align: center;
+}
+
+.secure-status {
+  min-height: 22px;
+  padding: 5px 0 0;
+  font-size: 10.5px;
+  color: var(--accent);
+  text-align: center;
+}
+
+.secure-status.warn {
+  color: var(--warn);
+}
+
+.secure-info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 13px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 13px;
+}
+
+.secure-info-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 11.5px;
+}
+
+.secure-info-row span {
+  color: var(--faint);
+}
+
+.secure-info-row b {
+  overflow: hidden;
+  font-weight: 600;
+  color: var(--text-2);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.secure-info-code {
+  font-family: var(--mono);
+  font-size: 16px;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+}
+
+@media (max-width: 900px) {
+  .secure-banner {
+    padding-right: 18px;
+    padding-left: 18px;
+  }
+
+  .secure-banner-text span {
+    display: none;
+  }
+}
+/* 会话列表中的加密状态 */
+.peer.secure {
+  background: linear-gradient(90deg, rgba(46, 230, 184, 0.09), rgba(56, 189, 248, 0.025) 70%, transparent);
+  border-color: rgba(46, 230, 184, 0.16);
+}
+
+.peer.secure:hover {
+  background: linear-gradient(90deg, rgba(46, 230, 184, 0.14), rgba(56, 189, 248, 0.045) 70%, transparent);
+  border-color: rgba(46, 230, 184, 0.26);
+}
+
+html[data-theme="light"] .peer.secure {
+  background: linear-gradient(90deg, rgba(13, 148, 136, 0.1), rgba(2, 132, 199, 0.02) 70%, transparent);
+}
+
+.peer.secure .avatar {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18), 0 0 0 2px rgba(46, 230, 184, 0.24), 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.peer.paired .avatar {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 0 0 1px rgba(148, 163, 184, 0.22), 0 6px 16px rgba(0, 0, 0, 0.16);
+}
+
+.avatar-lock {
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  display: grid;
+  width: 15px;
+  height: 15px;
+  place-items: center;
+  color: #03221d;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  border: 2px solid #0a101c;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+html[data-theme="light"] .avatar-lock {
+  border-color: #fff;
+  color: #fff;
+  background: linear-gradient(135deg, #0d9488, #0284c7);
+}
+
+.peer-secure-badge {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  font-size: 8.5px;
+  font-weight: 650;
+  line-height: 1.5;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid rgba(46, 230, 184, 0.2);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.peer-secure-badge.paired {
+  color: var(--muted);
+  background: var(--surface);
+  border-color: var(--line);
+}
+
+/* 未认证：次级、存疑的暖色卡片；名字仍按自称正常显示。 */
+.peer.unverified-peer:not(.active):not(.warning) {
+  background: linear-gradient(90deg, rgba(251, 191, 36, 0.075), rgba(251, 191, 36, 0.018) 72%, transparent);
+  border-color: rgba(251, 191, 36, 0.16);
+}
+
+.peer.unverified-peer:not(.active):not(.warning):hover {
+  background: linear-gradient(90deg, rgba(251, 191, 36, 0.115), rgba(251, 191, 36, 0.035) 72%, transparent);
+  border-color: rgba(251, 191, 36, 0.28);
+}
+
+.peer.unverified-peer:not(.warning) .peer-sub {
+  color: rgba(251, 191, 36, 0.72);
+}
+
+.peer.unverified-peer.active:not(.warning) {
+  background: linear-gradient(90deg, rgba(251, 191, 36, 0.15), rgba(251, 191, 36, 0.04) 72%, transparent);
+  border-color: rgba(251, 191, 36, 0.32);
+}
+
+.peer.unverified-peer.active:not(.warning)::before {
+  background: linear-gradient(180deg, var(--warn), rgba(245, 158, 11, 0.8));
+  box-shadow: 0 0 12px rgba(251, 191, 36, 0.5);
+}
+
+/* 已认证：主要、安全的青绿/天蓝卡片。 */
+.peer.verified-peer:not(.active):not(.warning) {
+  background: linear-gradient(90deg, rgba(46, 230, 184, 0.09), rgba(67, 185, 246, 0.035) 72%, transparent);
+  border-color: rgba(46, 230, 184, 0.17);
+}
+
+.peer.verified-peer:not(.active):not(.warning):hover {
+  background: linear-gradient(90deg, rgba(46, 230, 184, 0.14), rgba(67, 185, 246, 0.055) 72%, transparent);
+  border-color: rgba(46, 230, 184, 0.3);
+}
+
+html[data-theme="light"] .peer.unverified-peer:not(.active):not(.warning) {
+  background: linear-gradient(90deg, rgba(180, 83, 9, 0.07), rgba(180, 83, 9, 0.015) 72%, transparent);
+  border-color: rgba(180, 83, 9, 0.15);
+}
+
+html[data-theme="light"] .peer.unverified-peer:not(.active):not(.warning):hover {
+  background: linear-gradient(90deg, rgba(180, 83, 9, 0.11), rgba(180, 83, 9, 0.03) 72%, transparent);
+  border-color: rgba(180, 83, 9, 0.26);
+}
+
+html[data-theme="light"] .peer.unverified-peer:not(.warning) .peer-sub {
+  color: rgba(180, 83, 9, 0.78);
+}
+
+html[data-theme="light"] .peer.unverified-peer.active:not(.warning) {
+  background: linear-gradient(90deg, rgba(180, 83, 9, 0.13), rgba(180, 83, 9, 0.035) 72%, transparent);
+  border-color: rgba(180, 83, 9, 0.28);
+}
+
+html[data-theme="light"] .peer.verified-peer:not(.active):not(.warning) {
+  background: linear-gradient(90deg, rgba(13, 148, 136, 0.08), rgba(2, 132, 199, 0.03) 72%, transparent);
+  border-color: rgba(13, 148, 136, 0.16);
+}
+
+html[data-theme="light"] .peer.verified-peer:not(.active):not(.warning):hover {
+  background: linear-gradient(90deg, rgba(13, 148, 136, 0.12), rgba(2, 132, 199, 0.05) 72%, transparent);
+  border-color: rgba(13, 148, 136, 0.28);
+}
+
+.peer.warning {
+  background: linear-gradient(90deg, rgba(251, 113, 133, 0.1), rgba(251, 113, 133, 0.025) 70%, transparent);
+  border-color: rgba(251, 113, 133, 0.2);
+}
+
+.peer.warning:hover {
+  background: linear-gradient(90deg, rgba(251, 113, 133, 0.14), rgba(251, 113, 133, 0.04) 70%, transparent);
+  border-color: rgba(251, 113, 133, 0.3);
+}
+
+html[data-theme="light"] .peer.warning {
+  background: linear-gradient(90deg, rgba(225, 29, 72, 0.08), rgba(225, 29, 72, 0.015) 70%, transparent);
+}
+
+.peer.warning .avatar {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 0 0 2px rgba(251, 113, 133, 0.28), 0 6px 16px rgba(0, 0, 0, 0.18);
+}
+
+.peer-secure-badge.warn {
+  color: var(--danger);
+  background: rgba(251, 113, 133, 0.09);
+  border-color: rgba(251, 113, 133, 0.24);
+}
+
+.peer.secure .peer-sub {
+  color: var(--muted);
+}
+
+.secure-banner.paused {
+  background: linear-gradient(90deg, rgba(148, 163, 184, 0.1), rgba(56, 189, 248, 0.03));
+  border-bottom-color: var(--line);
+}
+
+.secure-banner.paused .secure-banner-icon {
+  color: var(--muted);
+}
+
+.secure-banner.paused .secure-banner-text b {
+  color: var(--muted);
+}
+
+/* 离线联系人：去掉认证配色，整体压暗，避免和在线联系人争夺注意力。 */
+.peer.offline:not(.active) {
+  opacity: 0.62;
+}
+
+.peer.offline:not(.active):hover {
+  opacity: 0.86;
+}
+
+.peer.offline.verified-peer:not(.active),
+.peer.offline.unverified-peer:not(.active) {
+  background: transparent;
+  border-color: transparent;
+}
+
+.peer.offline.verified-peer:not(.active):hover,
+.peer.offline.unverified-peer:not(.active):hover {
+  background: var(--surface);
+  border-color: var(--line);
+}
+
+.peer.offline.unverified-peer:not(.warning) .peer-sub {
+  color: var(--faint);
+}
+
+.peer.offline .avatar-lock {
+  filter: grayscale(0.75);
+  opacity: 0.65;
+}
+
+.peer.offline.active:not(.warning) {
+  background: var(--surface);
+  border-color: var(--line);
+  opacity: 0.82;
+}
+
+.peer.offline.active:not(.warning)::before {
+  background: var(--line-strong);
+  box-shadow: none;
+}

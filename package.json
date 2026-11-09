@@ -1,0 +1,74 @@
+{
+  "name": "feige-ipmsg",
+  "productName": "飞鸽",
+  "version": "2.1.0",
+  "description": "飞鸽传书 · 局域网自动发现、即时消息、图片、文件与目录直传",
+  "main": "src/main/main.js",
+  "author": "SpiritHuang",
+  "desktopName": "feige.desktop",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dev": "FEIGE_DEV=1 electron .",
+    "hub": "node server/src/index.js",
+    "test": "node test/protocol.test.js && node test/identity.test.js && node test/transport.test.js && node test/alive.test.js && node test/stun.test.js && node test/hub.test.js && node test/switch.test.js && node test/failover.test.js && node test/migration.test.js && node test/isolation.test.js && node test/network.test.js && node test/history.test.js && node test/contacts.test.js && node test/secure.test.js && node test/local-pass.test.js",
+    "test:e2e": "node test/app-e2e.js",
+    "build:appimage": "electron-builder --linux AppImage",
+    "build:windows": "electron-builder --win portable --x64",
+    "pack:dir": "electron-builder --dir",
+    "test:e2e:switch": "node test/app-switch-e2e.js"
+  },
+  "devDependencies": {
+    "electron": "^45.0.0",
+    "electron-builder": "^26.18.0",
+    "ws": "^8.22.0"
+  },
+  "build": {
+    "appId": "io.github.spirithuang.feige",
+    "productName": "飞鸽",
+    "executableName": "feige",
+    "copyright": "Copyright © 2026 SpiritHuang",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "category": "Network",
+      "icon": "assets/icon.png",
+      "synopsis": "局域网即时消息、图片与文件传输",
+      "description": "Linux 版飞鸽传书：自动发现、即时消息、图片、文件与文件夹直传",
+      "syncDesktopName": true
+    },
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.png",
+      "artifactName": "feige-${version}-windows-${arch}.${ext}"
+    },
+    "appImage": {
+      "artifactName": "feige-${version}-${arch}.${ext}"
+    }
+  },
+  "dependencies": {
+    "werift": "^0.25.2"
+  }
+}

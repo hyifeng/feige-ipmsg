@@ -1,0 +1,18 @@
+{
+  "name": "feige-hub",
+  "version": "0.1.0",
+  "private": true,
+  "description": "飞鸽 P2P Hub：上下线广播 + 打洞信令 + STUN",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "build:win": "pkg src/index.js --targets node22-win-x64 --output ../dist/feige-hub.exe",
+    "build:linux": "pkg src/index.js --targets node22-linux-x64 --output ../dist/feige-hub"
+  },
+  "dependencies": {
+    "ws": "^8.22.0"
+  },
+  "devDependencies": {
+    "@yao-pkg/pkg": "^6.24.0"
+  }
+}

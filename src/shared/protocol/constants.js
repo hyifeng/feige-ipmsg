@@ -1,0 +1,53 @@
+'use strict';
+
+/** 当前飞鸽协议版本。不兼容旧版本：版本不匹配的发现包和连接直接丢弃。 */
+const PROTOCOL_VERSION = 6;
+const DEFAULT_PORT = 24250;
+const DEFAULT_DISCOVERY_PORT = 24250;
+const APP_TAG = 'feige';
+
+/** UDP 报文上限与字段上限，防止畸形包拖垮解析器。 */
+const MAX_UDP_PACKET_BYTES = 65507;
+const MAX_EXT_BYTES = 48 * 1024;
+const MAX_TEXT_CHARS = 8000;
+const MAX_FIELD_CHARS = 96;
+
+/** 签名消息的时钟窗口 / 重放缓存窗口。 */
+const CLOCK_SKEW_MS = 5 * 60 * 1000;
+const REPLAY_CACHE_MS = 10 * 60 * 1000;
+const MAX_MSG_ID_CHARS = 128;
+const MAX_SIGNATURE_CHARS = 96;
+
+const CMD = Object.freeze({
+  BR_ENTRY: 0x00000001,
+  BR_EXIT: 0x00000002,
+  ANSENTRY: 0x00000003,
+  BR_ALIVE: 0x00000004,
+  BR_UPDATE: 0x00000005,
+  SENDMSG: 0x00000020,
+  RECVMSG: 0x00000021,
+  GETFILEDATA: 0x00000060,
+  RELEASEFILES: 0x00000061,
+});
+
+const OPT = Object.freeze({
+  SENDCHECK: 0x00000100,
+  FILEATTACH: 0x00200000,
+});
+
+module.exports = {
+  PROTOCOL_VERSION,
+  DEFAULT_PORT,
+  DEFAULT_DISCOVERY_PORT,
+  APP_TAG,
+  MAX_UDP_PACKET_BYTES,
+  MAX_EXT_BYTES,
+  MAX_TEXT_CHARS,
+  MAX_FIELD_CHARS,
+  CLOCK_SKEW_MS,
+  REPLAY_CACHE_MS,
+  MAX_MSG_ID_CHARS,
+  MAX_SIGNATURE_CHARS,
+  CMD,
+  OPT,
+};
