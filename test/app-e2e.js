@@ -139,6 +139,7 @@ function startApp(label, config) {
     XDG_CONFIG_HOME: config.base,
     ELECTRON_DISABLE_SECURITY_WARNINGS: '1',
     FEIGE_LAN_ENABLED: '0',
+    FEIGE_LANG: 'zh-CN',
   };
   const child = spawn(electron, [
     '.',

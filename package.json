@@ -1,7 +1,7 @@
 {
   "name": "feige-ipmsg",
   "productName": "飞鸽",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "飞鸽传书 · 局域网自动发现、即时消息、图片、文件与目录直传",
   "main": "src/main/main.js",
   "author": "SpiritHuang",

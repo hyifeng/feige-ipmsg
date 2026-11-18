@@ -37,20 +37,6 @@ async function openSettings() {
             <span>${t('settings.nickname')}</span>
             <input class="input" id="setNickname" maxlength="32" value="${escapeHtml(settings.nickname)}" />
           </label>
-          <label class="field">
-            <span>${t('settings.language')}</span>
-            <select class="input" id="setLanguage">
-              <option value="zh-CN" ${getLocale() === 'zh-CN' ? 'selected' : ''}>中文</option>
-              <option value="en" ${getLocale() === 'en' ? 'selected' : ''}>English</option>
-            </select>
-          </label>
-          <label class="switch-row">
-            <div>
-              <b>${t('settings.lanEnabled')}</b>
-              <small>${t('settings.lanEnabledHint')}</small>
-            </div>
-            <span class="switch"><input type="checkbox" id="setLanEnabled" ${settings.lanEnabled !== false ? 'checked' : ''} /><i></i></span>
-          </label>
           <div class="switch-row">
             <div class="hub-copy">
               <b>${t('settings.hub.enabled')}</b>
@@ -97,6 +83,16 @@ async function openSettings() {
             </div>
             <span class="switch"><input type="checkbox" id="setSound" ${settings.sound !== false ? 'checked' : ''} /><i></i></span>
           </label>
+          <div class="language-row">
+            <div class="language-copy">
+              <b>${icon('globe', 13)}<span>${t('settings.language')}</span></b>
+              <small>${t('settings.languageHint')}</small>
+            </div>
+            <div class="language-switch" role="group" aria-label="${t('settings.language')}">
+              <button class="language-switch-option ${getLocale() === 'zh-CN' ? 'is-active' : ''}" type="button" data-language="zh-CN" aria-pressed="${getLocale() === 'zh-CN'}">中文</button>
+              <button class="language-switch-option ${getLocale() === 'en' ? 'is-active' : ''}" type="button" data-language="en" aria-pressed="${getLocale() === 'en'}">English</button>
+            </div>
+          </div>
         </div>
         <div class="modal-actions">
           <span class="settings-about">${t('settings.about', { version: escapeHtml(state.version), fingerprint: escapeHtml(state.self.fingerprint || '—') })}</span>
@@ -113,25 +109,26 @@ async function openSettings() {
   const autoInput = dom.modalRoot.querySelector('#setAutoAccept');
   const soundInput = dom.modalRoot.querySelector('#setSound');
   const autoUnlockInput = dom.modalRoot.querySelector('#setAutoUnlock');
-  const lanEnabledInput = dom.modalRoot.querySelector('#setLanEnabled');
   const hubEnabledInput = dom.modalRoot.querySelector('#setHubEnabled');
-  const languageSelect = dom.modalRoot.querySelector('#setLanguage');
+  const languageButtons = [...dom.modalRoot.querySelectorAll('[data-language]')];
 
-  languageSelect?.addEventListener('change', async () => {
-    const previous = getLocale();
-    const requested = languageSelect.value;
-    languageSelect.disabled = true;
-    try {
-      const saved = await window.feige.setLanguage(requested);
-      setLocale(saved);
-      openSettings();
-    } catch (error) {
-      setLocale(previous);
-      languageSelect.value = previous;
-      languageSelect.disabled = false;
-      toast(error.message || t('settings.languageUpdateFailed'), 'error');
-    }
-  });
+  for (const button of languageButtons) {
+    button.addEventListener('click', async () => {
+      const requested = button.dataset.language;
+      if (requested === getLocale()) return;
+      const previous = getLocale();
+      for (const option of languageButtons) option.disabled = true;
+      try {
+        const saved = await window.feige.setLanguage(requested);
+        setLocale(saved);
+        openSettings();
+      } catch (error) {
+        setLocale(previous);
+        for (const option of languageButtons) option.disabled = false;
+        toast(error.message || t('settings.languageUpdateFailed'), 'error');
+      }
+    });
+  }
 
   dom.modalRoot.querySelector('#browseDir').addEventListener('click', async () => {
     try {
@@ -177,19 +174,11 @@ async function openSettings() {
     const button = event.currentTarget;
     button.disabled = true;
     button.textContent = t('settings.saving');
-    const lanEnabled = lanEnabledInput.checked;
-    if (!lanEnabled && !state.settings.hubEnabled) {
-      toast(t('settings.requireNetwork'), 'warn');
-      button.disabled = false;
-      button.textContent = t('settings.save');
-      return;
-    }
     const patch = {
       nickname,
       downloadDir: dirInput.value,
       autoAccept: autoInput.checked,
       sound: soundInput.checked,
-      lanEnabled,
     };
     try {
       await window.feige.updateSettings(patch);

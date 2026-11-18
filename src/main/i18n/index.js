@@ -61,7 +61,7 @@ function normalizeLocale(value) {
   if (SUPPORTED_LOCALES.includes(text)) return text;
   if (/^zh(?:[-_]|$)/i.test(text)) return 'zh-CN';
   if (/^en(?:[-_]|$)/i.test(text)) return 'en';
-  return DEFAULT_LOCALE;
+  return 'en';
 }
 
 function getLocale() {

@@ -97,6 +97,7 @@ function startApp(label, config) {
       ...process.env,
       XDG_CONFIG_HOME: config.base,
       FEIGE_LAN_ENABLED: '1',
+      FEIGE_LANG: 'zh-CN',
       FEIGE_PORT: String(config.port),
       FEIGE_DISCOVERY_PORT: String(DISCOVERY_PORT),
       ELECTRON_DISABLE_SECURITY_WARNINGS: '1',
