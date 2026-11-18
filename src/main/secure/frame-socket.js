@@ -1,5 +1,7 @@
 'use strict';
 
+const { t } = require('../i18n');
+
 const { MAX_FRAME_BYTES } = require('./constants');
 
 class FrameSocket {
@@ -55,15 +57,15 @@ class FrameSocket {
   }
 
   send(value) {
-    if (this.closed) return Promise.reject(new Error('加密连接已关闭'));
+    if (this.closed) return Promise.reject(new Error(t('main.secure.error.frameConnectionClosed')));
     const data = Buffer.from(JSON.stringify(value));
-    if (data.length > MAX_FRAME_BYTES) return Promise.reject(new Error('加密帧过大'));
+    if (data.length > MAX_FRAME_BYTES) return Promise.reject(new Error(t('main.secure.error.frameTooLarge')));
     const length = Buffer.alloc(4);
     length.writeUInt32BE(data.length, 0);
     const frame = Buffer.concat([length, data]);
 
     const write = async () => {
-      if (this.closed) throw new Error('加密连接已关闭');
+      if (this.closed) throw new Error(t('main.secure.error.frameConnectionClosed'));
       const ok = this.socket.write(frame);
       if (!ok) {
         await new Promise((resolve, reject) => {
@@ -73,7 +75,7 @@ class FrameSocket {
           };
           const onClose = () => {
             cleanup();
-            reject(new Error('加密连接已关闭'));
+            reject(new Error(t('main.secure.error.frameConnectionClosed')));
           };
           const cleanup = () => {
             this.socket.removeListener('drain', onDrain);

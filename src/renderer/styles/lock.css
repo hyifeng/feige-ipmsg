@@ -96,6 +96,17 @@ html[data-theme="light"] .lock-card {
   letter-spacing: 0.02em;
 }
 
+.lock-brand span.lock-brand-name {
+  display: inline;
+  margin-left: 0;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  vertical-align: baseline;
+}
+
 .lock-brand span {
   display: inline-block;
   margin-left: 7px;

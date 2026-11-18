@@ -3,6 +3,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { ipcMain, dialog, nativeImage } = require('electron');
+const { t } = require('../../i18n');
 const {
   IMAGE_EXTENSIONS,
   IMAGE_MIME,
@@ -12,23 +13,23 @@ const {
 
 function ensureImageExt(filePath) {
   const extension = path.extname(filePath).slice(1).toLowerCase();
-  if (!IMAGE_EXTENSIONS.has(extension)) throw new Error('不支持的图片格式');
+  if (!IMAGE_EXTENSIONS.has(extension)) throw new Error(t('main.error.unsupportedImage'));
   return extension;
 }
 
 async function ensureImageSize(filePath) {
   const stat = await fs.promises.stat(filePath);
-  if (!stat.isFile() || stat.size > MAX_IMAGE_BYTES) throw new Error('图片不能超过 20 MB');
+  if (!stat.isFile() || stat.size > MAX_IMAGE_BYTES) throw new Error(t('main.error.imageTooLarge'));
   return stat;
 }
 
 function registerImageIpc(ctx) {
   ipcMain.handle('feige:pick-image', async () => {
     const result = await dialog.showOpenDialog(ctx.win, {
-      title: '选择图片',
-      buttonLabel: '预览',
+      title: t('main.dialog.chooseImage'),
+      buttonLabel: t('main.dialog.preview'),
       properties: ['openFile'],
-      filters: [{ name: '图片', extensions: [...IMAGE_EXTENSIONS] }],
+      filters: [{ name: t('main.dialog.imageFilter'), extensions: [...IMAGE_EXTENSIONS] }],
     });
     if (result.canceled || !result.filePaths.length) return null;
     const filePath = result.filePaths[0];
@@ -58,11 +59,11 @@ function registerImageIpc(ctx) {
   ipcMain.handle('feige:save-pasted-image', async (_event, payload = {}) => {
     const dataUrl = typeof payload.dataUrl === 'string' ? payload.dataUrl : '';
     const match = /^data:(image\/(?:png|jpeg|webp|gif|bmp));base64,([A-Za-z0-9+/=\s]+)$/.exec(dataUrl);
-    if (!match) throw new Error('剪贴板图片格式不支持');
+    if (!match) throw new Error(t('main.error.clipboardImageUnsupported'));
     const mime = match[1];
     const extension = mime === 'image/jpeg' ? 'jpg' : mime.split('/')[1];
     const buffer = Buffer.from(match[2], 'base64');
-    if (!buffer.length || buffer.length > MAX_IMAGE_BYTES) throw new Error('图片不能超过 20 MB');
+    if (!buffer.length || buffer.length > MAX_IMAGE_BYTES) throw new Error(t('main.error.imageTooLarge'));
     const dir = path.join(ctx.app.getPath('temp'), 'feige-pasted');
     await fs.promises.mkdir(dir, { recursive: true });
     const filename = `paste-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${extension}`;
@@ -70,14 +71,14 @@ function registerImageIpc(ctx) {
     await fs.promises.writeFile(filePath, buffer);
     return {
       path: filePath,
-      name: String(payload.name || `粘贴的图片.${extension}`).slice(0, 120),
+      name: String(payload.name || t('main.image.pastedName', { ext: extension })).slice(0, 120),
       size: buffer.length,
       preview: dataUrl,
     };
   });
 
   ipcMain.handle('feige:send-image', async (_event, payload = {}) => {
-    if (!ctx.node) throw new Error('网络尚未就绪');
+    if (!ctx.node) throw new Error(t('main.error.networkNotReady'));
     const filePath = String(payload.path || '');
     ensureImageExt(filePath);
     await ensureImageSize(filePath);
@@ -92,18 +93,18 @@ function registerImageIpc(ctx) {
     const filePath = String(target || '');
     const extension = ensureImageExt(filePath);
     const stat = await fs.promises.stat(filePath);
-    if (!stat.isFile() || stat.size > MAX_READ_IMAGE_BYTES) throw new Error('图片文件过大或不存在');
+    if (!stat.isFile() || stat.size > MAX_READ_IMAGE_BYTES) throw new Error(t('main.error.imageMissingOrTooLarge'));
     return `data:${IMAGE_MIME[extension]};base64,${(await fs.promises.readFile(filePath)).toString('base64')}`;
   });
 
   ipcMain.handle('feige:save-file-copy', async (_event, payload = {}) => {
     const source = String(payload.path || '');
     const stat = await fs.promises.stat(source).catch(() => null);
-    if (!stat || !stat.isFile()) throw new Error('源文件不存在');
+    if (!stat || !stat.isFile()) throw new Error(t('main.error.sourceMissing'));
     const suggested = String(payload.name || path.basename(source)).slice(0, 180);
     const result = await dialog.showSaveDialog(ctx.win, {
-      title: '转存图片',
-      buttonLabel: '保存',
+      title: t('main.dialog.saveImageCopy'),
+      buttonLabel: t('main.dialog.save'),
       defaultPath: path.join(ctx.app.getPath('downloads'), suggested),
     });
     if (result.canceled || !result.filePath) return null;

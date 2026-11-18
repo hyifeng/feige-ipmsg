@@ -191,22 +191,25 @@ html[data-theme="light"] .secure-banner.unverified {
 
 .secure-info-row {
   display: flex;
-  align-items: baseline;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
   font-size: 11.5px;
 }
 
 .secure-info-row span {
+  flex: none;
+  max-width: 42%;
   color: var(--faint);
 }
 
 .secure-info-row b {
-  overflow: hidden;
+  max-width: 62%;
+  overflow-wrap: anywhere;
   font-weight: 600;
   color: var(--text-2);
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  text-align: right;
+  white-space: normal;
 }
 
 .secure-info-code {
@@ -214,6 +217,7 @@ html[data-theme="light"] .secure-banner.unverified {
   font-size: 16px;
   letter-spacing: 0.12em;
   color: var(--accent);
+  white-space: nowrap;
 }
 
 @media (max-width: 900px) {

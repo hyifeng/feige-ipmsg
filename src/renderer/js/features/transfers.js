@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.js';
 import { escapeHtml, fileInfo, formatBytes, progressOf, relativeTime, transferDetails, transferShortState } from '../core/format.js';
 import { displayFor } from '../core/contacts.js';
 import { icon } from '../core/icons.js';
@@ -14,7 +15,7 @@ function fileMessageHtml(message) {
   const fileState = message.fileState;
 
   const first = files[0] || {};
-  const firstTop = String(first.relPath || first.name || '文件').split('/')[0];
+  const firstTop = String(first.relPath || first.name || t('common.file')).split('/')[0];
   const isFolder = transfer ? !!transfer.isFolder : offer ? !!offer.isFolder : !!message.isFolder;
   const rootName = (transfer && transfer.rootName)
     || (offer && offer.rootName)
@@ -22,12 +23,12 @@ function fileMessageHtml(message) {
     || firstTop;
   const title = isFolder
     ? rootName
-    : (totalEntries > 1 ? `${first.name || '文件'} 等 ${totalEntries} 项` : (first.name || '文件'));
+    : (totalEntries > 1 ? t('transfer.itemSummary', { name: first.name || t('common.file'), count: totalEntries }) : (first.name || t('common.file')));
   const info = fileInfo(title, isFolder);
 
   let percent = 0;
-  let stateLabel = '待接收';
-  let sub = `${totalFiles} 个文件${totalDirs ? ` · ${totalDirs} 个空文件夹` : ''} · ${formatBytes(totalBytes)}`;
+  let stateLabel = t('common.status.pending');
+  let sub = `${t('transfer.count.files', { count: totalFiles })}${totalDirs ? ` · ${t('transfer.count.emptyFolders', { count: totalDirs })}` : ''} · ${formatBytes(totalBytes)}`;
   let error = false;
   let pending = false;
 
@@ -38,7 +39,7 @@ function fileMessageHtml(message) {
     error = transfer.status === 'error';
   } else if (offer && !offer.accepted) {
     pending = true;
-    stateLabel = '待接收';
+    stateLabel = t('common.status.pending');
   } else if (fileState) {
     const status = fileState.status;
     percent = status === 'done'
@@ -48,43 +49,43 @@ function fileMessageHtml(message) {
         : 0;
     error = status === 'error';
     if (status === 'done') {
-      stateLabel = message.direction === 'out' ? '已发送' : '已接收';
-      sub = `${formatBytes(fileState.totalBytes)} · ${fileState.totalFiles || 0} 个文件`;
+      stateLabel = t(message.direction === 'out' ? 'common.status.sent' : 'common.status.received');
+      sub = t('transfer.detail.done', { size: formatBytes(fileState.totalBytes), count: fileState.totalFiles || 0 });
     } else if (status === 'pending') {
-      stateLabel = '未接收';
-      sub = '传输请求未处理';
+      stateLabel = t('transfer.status.notReceived');
+      sub = t('transfer.requestNotHandled');
     } else if (status === 'waiting') {
-      stateLabel = '未完成';
-      sub = '等待接收';
+      stateLabel = t('transfer.status.incomplete');
+      sub = t('common.status.waitingToReceive');
     } else if (status === 'active') {
-      stateLabel = '已中断';
-      sub = '上次传输中断';
+      stateLabel = t('transfer.status.interrupted');
+      sub = t('transfer.interruptedHint');
     } else if (status === 'declined') {
-      stateLabel = message.direction === 'out' ? '被拒绝' : '已拒绝';
-      sub = '传输请求被拒绝';
+      stateLabel = t(message.direction === 'out' ? 'common.status.rejected' : 'common.status.declined');
+      sub = t('transfer.requestWasDeclined');
     } else if (status === 'canceled') {
-      stateLabel = '已取消';
-      sub = '传输已取消';
+      stateLabel = t('common.status.canceled');
+      sub = t('common.transferCanceled');
     } else if (status === 'error') {
-      stateLabel = '失败';
-      sub = fileState.error || '传输失败';
+      stateLabel = t('common.status.failed');
+      sub = fileState.error || t('transfer.failed');
     } else {
-      stateLabel = '历史记录';
+      stateLabel = t('common.status.historyRecord');
       sub = formatBytes(fileState.totalBytes);
     }
   } else if (message.canceled) {
-    stateLabel = '已取消';
-    sub = '对方取消了传输请求';
+    stateLabel = t('common.status.canceled');
+    sub = t('transfer.requestCanceledByPeer');
   } else if (message.declined) {
-    stateLabel = '已拒绝';
-    sub = '传输请求已拒绝';
+    stateLabel = t('common.status.declined');
+    sub = t('transfer.requestDeclined');
   }
 
   const infoLabel = info.svg ? icon('folder', 19) : escapeHtml(info.label);
   const pendingActions = pending ? `
     <div class="offer-actions" data-offer-actions>
-      <button class="mini-btn primary" data-accept-offer="${escapeHtml(offer.id)}">接收</button>
-      <button class="mini-btn" data-decline-offer="${escapeHtml(offer.id)}">拒绝</button>
+      <button class="mini-btn primary" data-accept-offer="${escapeHtml(offer.id)}">${t('common.receive')}</button>
+      <button class="mini-btn" data-decline-offer="${escapeHtml(offer.id)}">${t('common.decline')}</button>
     </div>` : '';
   const historyRoot = !transfer && !offer && fileState
     && fileState.status === 'done' && message.direction === 'in'
@@ -94,7 +95,7 @@ function fileMessageHtml(message) {
     ? transfer.root
     : historyRoot;
   const openAction = openRoot
-    ? `<div class="offer-actions"><button class="mini-btn" data-open-root="${escapeHtml(openRoot)}">${icon('folder', 13)}<span>打开文件夹</span></button></div>`
+    ? `<div class="offer-actions"><button class="mini-btn" data-open-root="${escapeHtml(openRoot)}">${icon('folder', 13)}<span>${t('common.openFolder')}</span></button></div>`
     : '';
 
   return `
@@ -154,33 +155,33 @@ function renderTransfers() {
 
   let html = '';
   if (cards.length) {
-    html += `<div class="transfer-section">进行中 · ${cards.length}</div>${cards.join('')}`;
+    html += `<div class="transfer-section">${t('transfer.section.active', { count: cards.length })}</div>${cards.join('')}`;
   }
   if (finished.length) {
-    html += `<div class="transfer-section">最近完成</div>${finished.map(transferCard).join('')}`;
+    html += `<div class="transfer-section">${t('transfer.section.recent')}</div>${finished.map(transferCard).join('')}`;
   }
   if (!html) {
     html = `
       <div class="panel-empty">
         <span class="ico">${icon('inbox', 24)}</span>
-        <b>暂无传输任务</b>
-        <small>发送或接收的文件会出现在这里<br>支持文件与整个文件夹</small>
+        <b>${t('transfer.emptyTitle')}</b>
+        <small>${t('transfer.emptyHint.line1')}<br>${t('transfer.emptyHint.line2')}</small>
       </div>`;
   }
 
   dom.transferList.innerHTML = html;
   dom.transferSummary.textContent = cards.length || finished.length
-    ? `${cards.length} 个进行中 · ${finished.length} 个已完成`
-    : '暂无传输';
+    ? t('transfer.summary', { active: cards.length, done: finished.length })
+    : t('transfer.summaryEmpty');
 }
 
 function pendingOfferCard(offer) {
   const files = offer.files || [];
   const first = files[0] || {};
-  const top = String(first.relPath || first.name || '文件').split('/')[0];
+  const top = String(first.relPath || first.name || t('common.file')).split('/')[0];
   const title = offer.isFolder
     ? (offer.rootName || top)
-    : (offer.totalEntries > 1 ? `${first.name || top} 等 ${offer.totalEntries} 项` : (first.name || top));
+    : (offer.totalEntries > 1 ? t('transfer.itemSummary', { name: first.name || top, count: offer.totalEntries }) : (first.name || top));
   const total = offer.totalBytes;
   return `
     <div class="transfer-card">
@@ -188,13 +189,13 @@ function pendingOfferCard(offer) {
         <span class="tc-icon in">${icon('download', 16)}</span>
         <div class="tc-main">
           <div class="tc-title">${escapeHtml(title)}</div>
-          <div class="tc-sub">${escapeHtml(displayFor(offer.peerKey, offer.peerName).label)} · 传输请求</div>
+          <div class="tc-sub">${escapeHtml(displayFor(offer.peerKey, offer.peerName).label)} · ${t('transfer.request')}</div>
         </div>
-        <button class="tc-action" data-tc-action="offer" data-id="${escapeHtml(offer.id)}" title="接收">${icon('check', 15)}</button>
-        <button class="tc-action" data-tc-action="decline" data-id="${escapeHtml(offer.id)}" title="拒绝">${icon('x', 15)}</button>
+        <button class="tc-action" data-tc-action="offer" data-id="${escapeHtml(offer.id)}" title="${t('common.receive')}">${icon('check', 15)}</button>
+        <button class="tc-action" data-tc-action="decline" data-id="${escapeHtml(offer.id)}" title="${t('common.decline')}">${icon('x', 15)}</button>
       </div>
       <div class="tc-bar"><i style="width:0%"></i></div>
-      <div class="tc-meta"><span>${offer.totalFiles} 个文件 · ${formatBytes(offer.totalBytes)}</span><span>待确认</span></div>
+      <div class="tc-meta"><span>${t('transfer.count.files', { count: offer.totalFiles })} · ${formatBytes(offer.totalBytes)}</span><span>${t('common.status.pendingConfirmation')}</span></div>
     </div>`;
 }
 
@@ -204,8 +205,8 @@ function transferCard(transfer) {
   const title = transfer.isFolder && transfer.rootName
     ? transfer.rootName
     : (transfer.totalEntries > 1
-      ? `${first.name || '文件'} 等 ${transfer.totalEntries} 项`
-      : (first.name || transfer.rootName || '文件'));
+      ? t('transfer.itemSummary', { name: first.name || t('common.file'), count: transfer.totalEntries })
+      : (first.name || transfer.rootName || t('common.file')));
   const percent = progressOf(transfer);
   const error = transfer.status === 'error';
   const canCancel = transfer.status === 'waiting' || transfer.status === 'active';
@@ -213,21 +214,21 @@ function transferCard(transfer) {
 
   let action = '';
   if (canOpen) {
-    action = `<button class="tc-action" data-tc-action="open" data-path="${escapeHtml(transfer.root)}" title="打开文件夹">${icon('folder', 15)}</button>`;
+    action = `<button class="tc-action" data-tc-action="open" data-path="${escapeHtml(transfer.root)}" title="${t('common.openFolder')}">${icon('folder', 15)}</button>`;
   } else if (canCancel) {
-    action = `<button class="tc-action" data-tc-action="cancel" data-id="${escapeHtml(transfer.id)}" title="取消传输">${icon('x', 15)}</button>`;
+    action = `<button class="tc-action" data-tc-action="cancel" data-id="${escapeHtml(transfer.id)}" title="${t('transfer.cancel')}">${icon('x', 15)}</button>`;
   }
 
   const metaRight = transfer.status === 'done'
     ? `100% · ${formatBytes(transfer.totalBytes)}`
     : `${percent}% · ${formatBytes(transfer.doneBytes)} / ${formatBytes(transfer.totalBytes)}`;
   let metaLeft = '';
-  if (transfer.status === 'done') metaLeft = transfer.direction === 'in' ? '已接收' : '已发送';
-  else if (transfer.status === 'active') metaLeft = transfer.speed ? `${formatBytes(transfer.speed)}/s` : '传输中…';
-  else if (transfer.status === 'waiting') metaLeft = transfer.direction === 'out' ? '等待对方接收…' : '等待接收';
-  else if (transfer.status === 'declined') metaLeft = transfer.direction === 'in' ? '已拒绝' : '对方已拒绝';
-  else if (transfer.status === 'canceled') metaLeft = '已取消';
-  else if (transfer.status === 'error') metaLeft = transfer.error || '传输失败';
+  if (transfer.status === 'done') metaLeft = t(transfer.direction === 'in' ? 'common.status.received' : 'common.status.sent');
+  else if (transfer.status === 'active') metaLeft = transfer.speed ? `${formatBytes(transfer.speed)}/s` : t('transfer.active');
+  else if (transfer.status === 'waiting') metaLeft = t(transfer.direction === 'out' ? 'transfer.waitingPeer' : 'common.status.waitingToReceive');
+  else if (transfer.status === 'declined') metaLeft = t(transfer.direction === 'in' ? 'common.status.declined' : 'transfer.peerDeclinedOutgoing');
+  else if (transfer.status === 'canceled') metaLeft = t('common.status.canceled');
+  else if (transfer.status === 'error') metaLeft = transfer.error || t('transfer.failed');
   const metaClass = transfer.status === 'done' ? 'ok' : (error || transfer.status === 'declined') ? 'bad' : '';
 
   return `

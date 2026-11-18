@@ -5,6 +5,7 @@ const os = require('node:os');
 const { FeigeNode } = require('../network');
 const { emit, selfInfo, contactInfo, decorateContact, friendlyNetworkError } = require('./info');
 const { notify } = require('./shell');
+const { t, secureReasonText } = require('../i18n');
 const {
   persistMessage,
   incomingFileMessage,
@@ -90,7 +91,7 @@ class NodeService {
       persistMessage(ctx, message);
       emit(ctx, 'message', decorated);
       if (message.direction === 'in') {
-        const body = message.kind === 'image' ? '发送了一张图片' : String(message.text || '').slice(0, 120);
+        const body = message.kind === 'image' ? t('main.notify.imageSent') : String(message.text || '').slice(0, 120);
         notify(ctx, this.displayName(message.peerKey, message.peerName), body);
       }
     });
@@ -108,7 +109,10 @@ class NodeService {
       }
       emit(ctx, 'offer', this.decorate(offer));
       const count = offer.totalFiles || offer.files.filter((file) => !file.dir).length;
-      notify(ctx, '收到文件', `${this.displayName(offer.peerKey, offer.peerName)} 发来 ${count} 个文件`);
+      notify(ctx, t('main.notify.incomingFilesTitle'), t('main.notify.incomingFilesBody', {
+        name: this.displayName(offer.peerKey, offer.peerName),
+        count,
+      }));
     });
     current.on('offer-closed', (info) => {
       if (ctx.history) {
@@ -141,7 +145,10 @@ class NodeService {
     current.on('transfer-done', (info) => {
       emit(ctx, 'transfer-done', this.decorate(info));
       if (info.direction === 'in' && !info.image) {
-        notify(ctx, '文件已接收', `${this.displayName(info.peerKey, info.peerName)} 发来的文件已保存到 ${info.root || ctx.settings.downloadDir}`);
+        notify(ctx, t('main.notify.filesReceivedTitle'), t('main.notify.filesReceivedBody', {
+          name: this.displayName(info.peerKey, info.peerName),
+          path: info.root || ctx.settings.downloadDir,
+        }));
       }
     });
     current.on('transfer-closed', (info) => emit(ctx, 'transfer-closed', info));
@@ -150,36 +157,54 @@ class NodeService {
     current.on('secure-sas', (info) => {
       emit(ctx, 'secure-sas', info);
       if (!info || !info.temporary) {
-        notify(ctx, '认证请求', `${this.displayName(info.peerKey, info.peerName)} 请求认证身份，请核对安全码`);
+        notify(ctx, t('main.notify.verificationRequestTitle'), t('main.notify.verificationRequestBody', {
+          name: this.displayName(info.peerKey, info.peerName),
+        }));
       }
     });
     current.on('secure-peer-confirmed', (info) => emit(ctx, 'secure-peer-confirmed', info));
     current.on('secure-authenticated', (info) => {
       emit(ctx, 'secure-authenticated', info);
-      notify(ctx, '身份认证完成', `已与 ${this.displayName(info.peerKey, info.peerName)} 完成身份认证`);
+      notify(ctx, t('main.notify.identityVerifiedTitle'), t('main.notify.identityVerifiedBody', {
+        name: this.displayName(info.peerKey, info.peerName),
+      }));
     });
     current.on('secure-up', (info) => {
       emit(ctx, 'secure-up', info);
       if (info && info.mode === 'resume') {
-        notify(ctx, '身份认证已恢复', `已恢复与 ${this.displayName(info.peerKey, info.peerName)} 的身份认证`);
+        notify(ctx, t('main.notify.identityRestoredTitle'), t('main.notify.identityRestoredBody', {
+          name: this.displayName(info.peerKey, info.peerName),
+        }));
       }
     });
     current.on('secure-down', (info) => {
       emit(ctx, 'secure-down', info);
       if (info && info.wasActive) {
         if (!info.temporary) {
-          notify(ctx, '会话已断开', `${this.displayName(info.peerKey, info.peerName)}：${info.reason || '连接已断开'}`);
+          notify(ctx, t('main.notify.sessionClosedTitle'), t('main.notify.sessionClosedBody', {
+            name: this.displayName(info.peerKey, info.peerName),
+            reason: secureReasonText(info.reason) || t('main.reason.connectionClosed'),
+          }));
         }
       } else if (info && info.pairingRemoved) {
-        notify(ctx, '认证校验失败', `${this.displayName(info.peerKey, info.peerName)}：${info.reason || '认证密钥无效，会话已断开'}`);
+        notify(ctx, t('main.notify.verificationCheckFailedTitle'), t('main.notify.sessionClosedBody', {
+          name: this.displayName(info.peerKey, info.peerName),
+          reason: secureReasonText(info.reason) || t('main.reason.invalidVerificationKey'),
+        }));
       } else if (info && info.auto) {
-        notify(ctx, '认证恢复失败', `${this.displayName(info.peerKey, info.peerName)}：${info.reason || '自动恢复认证失败'}`);
+        notify(ctx, t('main.notify.verificationRestoreFailedTitle'), t('main.notify.sessionClosedBody', {
+          name: this.displayName(info.peerKey, info.peerName),
+          reason: secureReasonText(info.reason) || t('main.reason.autoRestoreFailed'),
+        }));
       }
     });
     current.on('secure-warning', (info) => {
       emit(ctx, 'secure-warning', info);
       if (info && info.code === 'no-pairing') {
-        notify(ctx, '认证恢复失败', `${this.displayName(info.peerKey, info.peerName)}：本机没有认证密钥，无法自动恢复身份认证`);
+        notify(ctx, t('main.notify.verificationRestoreFailedTitle'), t('main.notify.sessionClosedBody', {
+          name: this.displayName(info.peerKey, info.peerName),
+          reason: t('main.reason.noLocalVerificationKey'),
+        }));
       }
     });
     current.on('discovery-status', (info) => emit(ctx, 'discovery-status', info));

@@ -1,5 +1,7 @@
 'use strict';
 
+const { t } = require('../i18n');
+
 const fs = require('node:fs');
 const fsp = require('node:fs/promises');
 const path = require('node:path');
@@ -31,7 +33,7 @@ class LocalCryptoError extends Error {
 
 function assertKey(key) {
   if (!Buffer.isBuffer(key) || key.length !== 32) {
-    throw new LocalCryptoError('无效的本地加密密钥', 'LOCAL_KEY_REQUIRED');
+    throw new LocalCryptoError(t('main.localPass.invalidEncryptionKey'), 'LOCAL_KEY_REQUIRED');
   }
 }
 
@@ -64,10 +66,10 @@ function encryptJson(key, value, aad = '') {
 
 function decryptJson(key, envelope, aad = '') {
   assertKey(key);
-  if (!isEnvelope(envelope)) throw new LocalCryptoError('无效的加密数据', 'LOCAL_DECRYPT_FAILED');
+  if (!isEnvelope(envelope)) throw new LocalCryptoError(t('main.localPass.invalidEncryptedData'), 'LOCAL_DECRYPT_FAILED');
 
   const iv = Buffer.from(envelope.iv, 'base64');
-  if (iv.length !== IV_BYTES) throw new LocalCryptoError('加密数据已损坏', 'LOCAL_DECRYPT_FAILED');
+  if (iv.length !== IV_BYTES) throw new LocalCryptoError(t('main.localPass.corruptedData'), 'LOCAL_DECRYPT_FAILED');
 
   let plaintext;
   try {
@@ -79,13 +81,13 @@ function decryptJson(key, envelope, aad = '') {
       decipher.final(),
     ]);
   } catch {
-    throw new LocalCryptoError('本地数据解密失败', 'LOCAL_DECRYPT_FAILED');
+    throw new LocalCryptoError(t('main.localPass.decryptFailure'), 'LOCAL_DECRYPT_FAILED');
   }
 
   try {
     return JSON.parse(plaintext.toString('utf8'));
   } catch {
-    throw new LocalCryptoError('本地数据格式损坏', 'LOCAL_DECRYPT_FAILED');
+    throw new LocalCryptoError(t('main.localPass.invalidFormat'), 'LOCAL_DECRYPT_FAILED');
   }
 }
 
@@ -147,7 +149,7 @@ function readProtectedJsonSync(file, key, aad) {
   const raw = readJsonSync(file);
   if (raw == null) return null;
   if (!isEnvelope(raw)) return raw;
-  if (!key) throw new LocalCryptoError('本地数据已加密，请先输入本地密码', 'LOCAL_LOCKED');
+  if (!key) throw new LocalCryptoError(t('main.localPass.dataLocked'), 'LOCAL_LOCKED');
   return decryptJson(key, raw, aad);
 }
 
@@ -155,7 +157,7 @@ async function readProtectedJson(file, key, aad) {
   const raw = await readJson(file);
   if (raw == null) return null;
   if (!isEnvelope(raw)) return raw;
-  if (!key) throw new LocalCryptoError('本地数据已加密，请先输入本地密码', 'LOCAL_LOCKED');
+  if (!key) throw new LocalCryptoError(t('main.localPass.dataLocked'), 'LOCAL_LOCKED');
   return decryptJson(key, raw, aad);
 }
 

@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 
+const { t } = require('../i18n');
 const {
   AAD,
   isEnvelope,
@@ -30,11 +31,11 @@ const KDF = {
 };
 
 function validatePass(pass) {
-  if (typeof pass !== 'string') return { ok: false, message: '请输入本地密码' };
-  if (!pass.trim()) return { ok: false, message: '本地密码不能全部为空格' };
+  if (typeof pass !== 'string') return { ok: false, code: 'required', message: t('main.localPass.required') };
+  if (!pass.trim()) return { ok: false, code: 'blank', message: t('main.localPass.blank') };
   const length = [...pass].length;
-  if (length < MIN_LENGTH) return { ok: false, message: `本地密码至少需要 ${MIN_LENGTH} 位` };
-  if (length > MAX_LENGTH) return { ok: false, message: `本地密码不能超过 ${MAX_LENGTH} 位` };
+  if (length < MIN_LENGTH) return { ok: false, code: 'too-short', message: t('main.localPass.tooShort', { count: MIN_LENGTH }) };
+  if (length > MAX_LENGTH) return { ok: false, code: 'too-long', message: t('main.localPass.tooLong', { count: MAX_LENGTH }) };
   return { ok: true };
 }
 
@@ -116,7 +117,7 @@ class LocalPass {
       const raw = JSON.parse(fs.readFileSync(this.file, 'utf8'));
       if (raw && raw.v === FILE_VERSION) {
         if (!validKdf(raw.kdf) || !isEnvelope(raw.wrap) || !isEnvelope(raw.keyCheck)) {
-          throw new Error('本地密码配置格式无效');
+          throw new Error(t('main.localPass.invalidConfig'));
         }
         this.meta = {
           v: FILE_VERSION,
@@ -131,7 +132,7 @@ class LocalPass {
 
       if (raw && raw.v === LEGACY_VERSION) {
         if (!validKdf(raw.kdf) || !isEnvelope(raw.check)) {
-          throw new Error('本地密码配置格式无效');
+          throw new Error(t('main.localPass.invalidConfig'));
         }
         this.meta = {
           v: LEGACY_VERSION,
@@ -143,7 +144,7 @@ class LocalPass {
         return;
       }
 
-      throw new Error('本地密码配置格式无效');
+      throw new Error(t('main.localPass.invalidConfig'));
     } catch (error) {
       this.metaError = error;
     }
@@ -162,7 +163,7 @@ class LocalPass {
   }
 
   setup(pass) {
-    if (this.fileExists) throw new Error('本地密码已设置，请输入本地密码解锁');
+    if (this.fileExists) throw new Error(t('main.localPass.alreadyConfigured'));
     const validation = validatePass(pass);
     if (!validation.ok) throw new Error(validation.message);
 
@@ -179,7 +180,7 @@ class LocalPass {
 
   unlock(pass) {
     if (!this.meta) {
-      throw new Error(this.isCorrupted() ? '本地密码配置已损坏，无法解锁' : '尚未设置本地密码');
+      throw new Error(t(this.isCorrupted() ? 'main.localPass.corrupted' : 'main.localPass.notConfigured'));
     }
     if (typeof pass !== 'string' || !pass) return false;
 
@@ -221,7 +222,7 @@ class LocalPass {
    */
   unlockWithKey(key) {
     if (!this.meta) {
-      throw new Error(this.isCorrupted() ? '本地密码配置已损坏，无法解锁' : '尚未设置本地密码');
+      throw new Error(t(this.isCorrupted() ? 'main.localPass.corrupted' : 'main.localPass.notConfigured'));
     }
     if (!Buffer.isBuffer(key) || key.length !== KEY_BYTES) return false;
 
@@ -245,7 +246,7 @@ class LocalPass {
    */
   changePass(oldPass, newPass) {
     if (!this.meta) {
-      throw new Error(this.isCorrupted() ? '本地密码配置已损坏，无法修改' : '尚未设置本地密码');
+      throw new Error(t(this.isCorrupted() ? 'main.localPass.corruptedChange' : 'main.localPass.notConfigured'));
     }
     const validation = validatePass(newPass);
     if (!validation.ok) throw new Error(validation.message);
@@ -276,7 +277,7 @@ class LocalPass {
   }
 
   getKey() {
-    if (!this.key) throw new Error('本地密码尚未解锁');
+    if (!this.key) throw new Error(t('main.localPass.notUnlocked'));
     return this.key;
   }
 
@@ -293,7 +294,7 @@ class LocalPass {
 
   _writeV2(pass, dek, createdAt) {
     if (!Buffer.isBuffer(dek) || dek.length !== KEY_BYTES) {
-      throw new Error('无效的本地数据密钥');
+      throw new Error(t('main.localPass.invalidKey'));
     }
 
     const salt = crypto.randomBytes(SALT_BYTES);

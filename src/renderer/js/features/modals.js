@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.js';
 import { toast } from '../core/notifications.js';
 import { dom, state } from '../core/state.js';
 import { closeImageMenu } from './images.js';
@@ -11,7 +12,7 @@ function closeModal(restoreTheme = true) {
     secureModal.settled = true;
     if (!secureModal.activeSession) {
       window.feige?.secureCancel(secureModal.id).catch(() => {});
-      toast('已取消身份认证', 'info');
+      toast(t('secure.status.canceled'), 'info');
     }
   }
   const wasSettings = state.modal && state.modal.type === 'settings';

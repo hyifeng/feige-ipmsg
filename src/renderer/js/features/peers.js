@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.js';
 import { avatarStyle, escapeHtml, initials, relativeTime, setAvatar } from '../core/format.js';
 import { displayFor } from '../core/contacts.js';
 import { icon } from '../core/icons.js';
@@ -10,20 +11,20 @@ import { renderTransfers } from './transfers.js';
 function peerSourceLabel(peer) {
   // 显示实际承载路径，而不是发现来源。LAN 发现还在、但数据已经
   // 切到 P2P 时，不能继续显示“局域网”。
-  if (peer.path === 'direct') return '公网直连';
-  if (peer.path === 'lan') return '局域网';
+  if (peer.path === 'direct') return t('peer.source.direct');
+  if (peer.path === 'lan') return t('peer.source.lan');
   const sources = Array.isArray(peer.sources) ? peer.sources : [];
-  if (sources.includes('lan')) return '局域网';
-  if (sources.includes('hub') || sources.includes('direct')) return '公网直连';
+  if (sources.includes('lan')) return t('peer.source.lan');
+  if (sources.includes('hub') || sources.includes('direct')) return t('peer.source.direct');
   return '';
 }
 
 function peerAddressLabel(peer) {
-  if (peer.path === 'direct') return 'P2P 直连';
+  if (peer.path === 'direct') return t('peer.source.p2p');
   if (peer.ip) return `${peer.ip}:${peer.port}`;
   const sources = Array.isArray(peer.sources) ? peer.sources : [];
-  if (sources.includes('hub') || sources.includes('direct')) return 'P2P 直连';
-  return '未知地址';
+  if (sources.includes('hub') || sources.includes('direct')) return t('peer.source.p2p');
+  return t('common.unknownAddress');
 }
 
 function peerByKey(key) {
@@ -42,7 +43,7 @@ function applyTheme(theme, persist = true) {
   if (persist) localStorage.setItem('feige-theme', value);
   if (dom.themeBtn) {
     dom.themeBtn.innerHTML = icon(value === 'light' ? 'moon' : 'sun', 18);
-    dom.themeBtn.title = value === 'light' ? '切换到深色' : '切换到浅色';
+    dom.themeBtn.title = t(value === 'light' ? 'peer.switchToDarkTheme' : 'peer.switchToLightTheme');
   }
 }
 
@@ -54,17 +55,17 @@ function renderAll() {
 }
 
 function renderSelf() {
-  const nickname = state.self.nickname || '飞鸽用户';
+  const nickname = state.self.nickname || t('app.defaultUserName');
   dom.selfName.textContent = nickname;
   setAvatar(dom.selfAvatar, nickname);
   const ip = state.self.addresses && state.self.addresses[0];
   if (!state.self.ready) {
-    dom.selfMeta.textContent = '正在启动…';
+    dom.selfMeta.textContent = t('app.starting');
   } else {
-    dom.selfMeta.textContent = `${ip || '无网络'} · 在线`;
+    dom.selfMeta.textContent = `${ip || t('common.noNetwork')} · ${t('common.status.online')}`;
   }
   dom.brandPulse.classList.toggle('off', !state.self.ready);
-  dom.brandPulse.title = '在线';
+  dom.brandPulse.title = t('common.status.online');
   dom.peerSearch.disabled = false;
   updateWelcomeHint();
 }
@@ -79,15 +80,15 @@ function updateWelcomeHint() {
   const unverified = state.peers.filter((peer) => peer.online && !displayFor(peer.key, peer.user).verified).length;
   const historyCount = state.historyPeers.length;
   if (!state.self.ready) {
-    dom.welcomeHint.textContent = '正在启动局域网服务…';
+    dom.welcomeHint.textContent = t('peer.welcome.starting');
   } else if (!online) {
     dom.welcomeHint.textContent = historyCount
-      ? `暂无在线设备 · 可从左侧历史联系人查看 ${historyCount} 段聊天记录`
-      : '还没有发现设备 · 请确认在同一网段，并允许 24250 端口';
+      ? t('peer.welcome.historyOnly', { count: historyCount })
+      : t('peer.welcome.noDevices');
   } else {
     dom.welcomeHint.textContent = unverified
-      ? `已发现 ${online} 台在线设备，其中 ${unverified} 台身份未认证 · 可核对 6 位码完成认证`
-      : `已发现 ${online} 台在线设备，选择一位开始传送`;
+      ? t('peer.welcome.online', { count: online, unverified })
+      : t('peer.welcome.onlinePick', { count: online });
   }
 }
 
@@ -118,8 +119,8 @@ function renderPeers() {
     dom.peerList.innerHTML = `
       <div class="peer-empty">
         <span class="ico">${icon(query ? 'search' : 'radar', 21)}</span>
-        <b>${query ? '没有匹配的联系人' : '还没有发现设备'}</b>
-        <small>${query ? '试试搜索别名、指纹、主机名、IP 或聊天内容' : '请确保大家在同一网段，并允许 UDP 24250 广播'}</small>
+        <b>${query ? t('peer.empty.noMatches') : t('peer.empty.noDevices')}</b>
+        <small>${query ? t('peer.empty.searchHint') : t('peer.empty.searchNetwork')}</small>
       </div>`;
     updateWelcomeHint();
     return;
@@ -127,21 +128,21 @@ function renderPeers() {
 
   const parts = [];
   if (namedOnline.length) {
-    parts.push(`<div class="section-label">在线同事 <span class="count">${namedOnline.length}</span></div>`);
+    parts.push(`<div class="section-label">${t('peer.section.online')} <span class="count">${namedOnline.length}</span></div>`);
     parts.push(namedOnline.map((peer) => peerRowHtml(peer, false)).join(''));
   }
   if (unnamedLive.length || unnamedHistory.length) {
     const count = unnamedLive.length + unnamedHistory.length;
-    parts.push(`<div class="section-label unnamed-label">${icon('alert', 12)} 未认证联系人 <span class="count">${count}</span></div>`);
+    parts.push(`<div class="section-label unnamed-label">${icon('alert', 12)} ${t('peer.section.unverified')} <span class="count">${count}</span></div>`);
     parts.push(unnamedLive.map((peer) => peerRowHtml(peer, false)).join(''));
     parts.push(unnamedHistory.map((peer) => peerRowHtml(peer, true)).join(''));
   }
   if (namedOffline.length) {
-    parts.push(`<div class="section-label">离线同事 <span class="count">${namedOffline.length}</span></div>`);
+    parts.push(`<div class="section-label">${t('peer.section.offline')} <span class="count">${namedOffline.length}</span></div>`);
     parts.push(namedOffline.map((peer) => peerRowHtml(peer, false)).join(''));
   }
   if (namedHistory.length) {
-    parts.push(`<div class="section-label">历史联系人 <span class="count">${namedHistory.length}</span></div>`);
+    parts.push(`<div class="section-label">${t('peer.section.history')} <span class="count">${namedHistory.length}</span></div>`);
     parts.push(namedHistory.map((peer) => peerRowHtml(peer, true)).join(''));
   }
   dom.peerList.innerHTML = parts.join('');
@@ -159,35 +160,35 @@ function peerRowHtml(peer, isHistory = false) {
   const verified = display.verified;
   const unnamed = !!display.unnamed;
   const claimed = display.claimed || peer.user || '';
-  const statusText = isHistory ? '历史' : peer.online ? '在线' : '离线';
-  const securityText = warning ? '认证异常' : verified ? '已认证' : (pending ? '认证中' : '未认证');
+  const statusText = isHistory ? t('common.status.history') : peer.online ? t('common.status.online') : t('common.status.offline');
+  const securityText = warning ? t('common.status.verificationIssue') : verified ? t('common.status.verified') : (pending ? t('common.status.verifying') : t('common.status.unverified'));
   const sourceText = peerSourceLabel(peer);
   const sub = verified
-    ? `${securityText} · ${statusText}${sourceText ? ` · ${sourceText}` : ''} · ${isHistory ? '历史记录' : (peer.host || peerAddressLabel(peer))}`
+    ? `${securityText} · ${statusText}${sourceText ? ` · ${sourceText}` : ''} · ${isHistory ? t('common.status.historyRecord') : (peer.host || peerAddressLabel(peer))}`
     : `${display.fingerprint} · ${statusText}${sourceText ? ` · ${sourceText}` : ''} · ${securityText}`;
   const title = [
     display.label,
-    `指纹 ${display.fingerprint}`,
+    t('offer.fingerprint', { fingerprint: display.fingerprint }),
     statusText,
-    verified ? securityText : `身份未认证${claimed ? ` · 自称“${claimed}”` : ''}`,
+    verified ? securityText : `${t('common.status.identityUnverified')}${claimed ? ` · ${t('peer.claimSuffix', { claimed })}` : ''}`,
     sourceText,
-    warning ? warning.title || '认证状态异常' : '',
+    warning ? warning.title || t('peer.status.verificationStatusIssue') : '',
     peerAddressLabel(peer),
   ].filter(Boolean).join(' · ');
   return `
     <button class="peer ${peer.online ? '' : 'offline'} ${isHistory ? 'history' : ''} ${verified ? 'verified-peer' : 'unverified-peer'} ${unnamed ? 'unnamed-peer' : ''} ${secureClass} ${isActive ? 'active' : ''}" data-peer="${escapeHtml(peer.key)}" title="${escapeHtml(title)}">
       <span class="avatar ${unnamed ? 'unnamed-avatar' : ''}" style="${unnamed ? '' : avatarStyle(display.label)}">${escapeHtml(unnamed ? '?' : initials(display.label))}
-        ${paired ? `<span class="avatar-lock" title="身份已认证">${icon('shield', 9)}</span>` : ''}
+        ${paired ? `<span class="avatar-lock" title="${t('common.status.identityVerified')}">${icon('shield', 9)}</span>` : ''}
         <i class="status-dot ${peer.online ? '' : 'offline'}"></i>
       </span>
       <span class="peer-body">
         <span class="peer-top">
           <span class="peer-name">${escapeHtml(display.label)}</span>
           ${warning
-            ? `<span class="peer-secure-badge warn">${icon('alert', 10)}<span>认证异常</span></span>`
+            ? `<span class="peer-secure-badge warn">${icon('alert', 10)}<span>${t('common.status.verificationIssue')}</span></span>`
             : !verified
-              ? `<span class="peer-secure-badge unnamed" title="身份未认证；消息仍会自动端到端加密">${icon('alert', 10)}<span>${securityText}</span></span>`
-              : `<span class="peer-secure-badge">${icon('shield', 10)}<span>已认证</span></span>`}
+              ? `<span class="peer-secure-badge unnamed" title="${t('peer.meta.unverifiedE2EE')}">${icon('alert', 10)}<span>${securityText}</span></span>`
+              : `<span class="peer-secure-badge">${icon('shield', 10)}<span>${t('common.status.verified')}</span></span>`}
           ${unread ? `<span class="unread">${unread > 99 ? '99+' : unread}</span>` : ''}
         </span>
         <span class="peer-sub">${escapeHtml(sub)}</span>
@@ -226,27 +227,30 @@ function renderChatHead(peer) {
   const authWarning = state.secureWarnings.get(peer.key);
   const authPending = state.securePending.get(peer.key);
   dom.chatStatus.textContent = authWarning
-    ? '认证异常'
-    : display.verified ? '已认证' : (authPending ? '认证中' : '未认证');
+    ? t('common.status.verificationIssue')
+    : display.verified ? t('common.status.verified') : (authPending ? t('common.status.verifying') : t('common.status.unverified'));
   dom.chatStatus.classList.remove('offline');
   dom.chatStatus.classList.toggle('secure', display.verified && !authWarning);
   dom.chatStatus.classList.toggle('warn', !display.verified || !!authWarning);
 
   const base = isHistory
-    ? `历史聊天 · ${relativeTime(peer.lastAt)}`
-    : `${peer.online ? '在线' : '离线'} · ${peer.host || '未知主机'} · ${peerAddressLabel(peer)}`;
+    ? t('peer.meta.historyChat', { time: relativeTime(peer.lastAt) })
+    : t(peer.online ? 'peer.meta.onlineWithHost' : 'peer.meta.offlineWithHost', {
+      host: peer.host || t('common.unknownHost'),
+      address: peerAddressLabel(peer),
+    });
   dom.chatMeta.textContent = display.verified
-    ? `指纹 ${display.fingerprint} · ${base}`
-    : `指纹 ${display.fingerprint} · 未认证 · ${base}`;
-  dom.peerAddress.textContent = isHistory ? '本地历史记录' : peerAddressLabel(peer);
+    ? t('peer.meta.fingerprintDetails', { fingerprint: display.fingerprint, details: base })
+    : t('peer.meta.fingerprintUnverifiedDetails', { fingerprint: display.fingerprint, details: base });
+  dom.peerAddress.textContent = isHistory ? t('peer.meta.localHistory') : peerAddressLabel(peer);
 
   if (dom.chatAliasBtn) {
     dom.chatAliasBtn.classList.toggle('is-hidden', isHistory || !display.verified);
     const label = dom.chatAliasBtn.querySelector('span:last-child');
-    if (label) label.textContent = '改名';
+    if (label) label.textContent = t('alias.action.rename');
     dom.chatAliasBtn.title = display.alias
-      ? '修改本地别名（只在当前设备生效）'
-      : `设置本地别名（当前显示对方自称：${claimed || '未提供'}）`;
+      ? t('peer.aliasEditTitle')
+      : t('peer.aliasTitle', { claimed: claimed || t('common.notProvided') });
   }
 
   const waiting = state.secureWaiting.has(peer.key) && !isHistory;
@@ -259,22 +263,22 @@ function renderChatHead(peer) {
   dom.sendFileBtn.disabled = !canSend;
   dom.sendFolderBtn.disabled = !canSend;
   dom.composer.classList.toggle('is-disabled', !canSend);
-  dom.messageInput.placeholder = isHistory
-    ? '历史联系人已离线，仅可查看聊天记录'
+  dom.messageInput.placeholder = t(isHistory
+    ? 'peer.hint.historyOffline'
     : !peer.online
-      ? '对方已离线，暂时无法发送'
+      ? 'peer.hint.peerOffline'
       : waiting
-        ? '本机认证已解除，等待对方重新认证'
-        : (display.verified ? '写点什么…  Enter 发送，Shift + Enter 换行' : '身份未认证 · 消息仍会自动加密');
-  dom.composerHint.textContent = isHistory
-    ? '只读模式 · 聊天记录保存在本机'
+        ? 'secure.status.localRevokedWaiting'
+        : (display.verified ? 'chat.composer.placeholder' : 'peer.meta.unverifiedEncrypted'));
+  dom.composerHint.textContent = t(isHistory
+    ? 'peer.hint.readOnly'
     : !peer.online
-      ? '等待对方重新上线…'
+      ? 'peer.hint.waitingPeerOnline'
       : waiting
-        ? '本机认证已解除 · 等待对方点击「重新认证」'
+        ? 'peer.hint.localRevoked'
         : (display.verified
-          ? 'Enter 发送 · Shift + Enter 换行 · 可直接拖入文件'
-          : '身份未认证 · 可点击「认证身份」核对 6 位码');
+          ? 'chat.composer.hint'
+          : 'peer.hint.unverifiedVerify'));
   renderSecure(peer);
 }
 

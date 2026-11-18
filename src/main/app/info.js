@@ -3,6 +3,7 @@
 const os = require('node:os');
 const { lanAddresses } = require('../network');
 const { shortIdentity, identityOfPeerKey, peerKeyOf, isIdentity } = require('../../shared/protocol/identity');
+const { t } = require('../i18n');
 
 function selfInfo(ctx) {
   const id = ctx.identity ? ctx.identity.id : (ctx.node ? ctx.node.identity : ctx.settings.identity);
@@ -47,7 +48,7 @@ function contactInfo(ctx, peerKey, claimedName = '') {
       alias: '',
       verified: false,
       unnamed: true,
-      label: '旧身份记录',
+      label: t('main.contact.legacyIdentity'),
       fingerprint: '—',
       claimed: claimedName,
     };
@@ -71,7 +72,7 @@ function contactInfo(ctx, peerKey, claimedName = '') {
       alias: '',
       verified: false,
       unnamed: !claimed,
-      label: claimed || '未认证设备',
+      label: claimed || t('main.contact.unverifiedDevice'),
     };
   }
 
@@ -79,7 +80,7 @@ function contactInfo(ctx, peerKey, claimedName = '') {
     ...base,
     verified: true,
     unnamed: false,
-    label: base.alias || base.claimed || '已验证设备',
+    label: base.alias || base.claimed || t('main.contact.verifiedDevice'),
   };
 }
 
@@ -108,9 +109,12 @@ function emit(ctx, type, payload) {
 function friendlyNetworkError(ctx, err) {
   const code = err && err.code;
   if (code === 'EADDRINUSE') {
-    return `端口 ${ctx.settings.port} 或发现端口 ${ctx.discoveryPort} 已被占用。请关闭占用该端口的程序后重试。`;
+    return t('main.network.portInUse', {
+      port: ctx.settings.port,
+      discoveryPort: ctx.discoveryPort,
+    });
   }
-  if (code === 'EACCES') return `没有权限监听端口 ${ctx.settings.port}，请改用 1024 以上的端口。`;
+  if (code === 'EACCES') return t('main.network.portPermission', { port: ctx.settings.port });
   return (err && err.message) || String(err);
 }
 

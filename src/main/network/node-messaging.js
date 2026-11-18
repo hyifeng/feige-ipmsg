@@ -1,16 +1,18 @@
 'use strict';
 
+const { t } = require('../i18n');
+
 const { NodeCore } = require('./node-core');
 const { now, uid } = require('./utils');
 
 class MessagingNode extends NodeCore {
   async sendText(peerKey, text) {
-    if (!this.online) throw new Error('已下线，上线后才能发送消息');
+    if (!this.online) throw new Error(t('main.network.error.offlineSendMessage'));
     const peer = this._requirePeer(peerKey);
     const body = String(text == null ? '' : text).replace(/\0/g, '');
-    if (!body.trim()) throw new Error('消息不能为空');
-    if (Buffer.byteLength(body) > 6000) throw new Error('消息太长了');
-    if (!peer.online) throw new Error('对方已离线');
+    if (!body.trim()) throw new Error(t('main.network.error.emptyMessage'));
+    if (Buffer.byteLength(body) > 6000) throw new Error(t('main.network.error.messageTooLong'));
+    if (!peer.online) throw new Error(t('main.error.peerOffline'));
 
     // 所有聊天内容都必须经过加密会话。没有会话时先建立临时会话，
     // 建立完成后再真正发送，绝不降级为签名明文。
@@ -41,7 +43,7 @@ class MessagingNode extends NodeCore {
         lastError = error;
       }
     }
-    throw lastError || new Error('加密会话不可用');
+    throw lastError || new Error(t('main.network.error.secureSessionUnavailable'));
   }
 }
 

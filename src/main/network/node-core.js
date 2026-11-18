@@ -1,5 +1,7 @@
 'use strict';
 
+const { getLocale, t } = require('../i18n');
+
 const os = require('node:os');
 const path = require('node:path');
 const fsp = require('node:fs/promises');
@@ -60,14 +62,14 @@ class NodeCore extends EventEmitter {
     super();
     this.port = Number(options.port) || DEFAULT_PORT;
     this.discoveryPort = Number(options.discoveryPort) || DEFAULT_DISCOVERY_PORT;
-    this.user = sanitizeField(options.user, '飞鸽用户') || '飞鸽用户';
+    this.user = sanitizeField(options.user, t('main.app.defaultUserName')) || t('main.app.defaultUserName');
     this.host = sanitizeField(options.host || os.hostname(), 'linux') || 'linux';
-    this.downloadDir = options.downloadDir || path.join(os.homedir(), 'Downloads', '飞鸽接收');
+    this.downloadDir = options.downloadDir || path.join(os.homedir(), 'Downloads', getLocale() === 'en' ? 'Feige Received' : '飞鸽接收');
     this.autoAccept = !!options.autoAccept;
     // identity = Ed25519 公钥（自证身份）；instanceId 只用于过滤本进程的广播。
     this.identityKey = options.identityKey || createIdentity();
     if (!this.identityKey || !this.identityKey.id || !this.identityKey.privateKey) {
-      throw new Error('缺少 Ed25519 身份密钥');
+      throw new Error(t('main.network.error.missingIdentityKey'));
     }
     this.identity = this.identityKey.id;
     this.instanceId = options.instanceId || uid();
@@ -376,9 +378,9 @@ class NodeCore extends EventEmitter {
   }
 
   announceTo(address, port = DEFAULT_DISCOVERY_PORT) {
-    if (!this.started) throw new Error('节点尚未启动');
+    if (!this.started) throw new Error(t('main.network.error.notStarted'));
     if (!this.online) return;
-    if (!address) throw new Error('地址为空');
+    if (!address) throw new Error(t('main.network.error.emptyAddress'));
     if (typeof this.discovery.announceTo === 'function') {
       this.discovery.announceTo(address, Number(port) || DEFAULT_DISCOVERY_PORT);
     }
@@ -593,7 +595,7 @@ class NodeCore extends EventEmitter {
         }
       }
       outgoing.status = wasWaiting ? 'declined' : 'canceled';
-      outgoing.error = wasWaiting ? '对方拒绝了传输' : '对方取消了传输';
+      outgoing.error = wasWaiting ? t('main.transfer.peerDeclined') : t('main.transfer.peerCanceled');
       this._emitTransfer(outgoing, true);
       this.emit('transfer-closed', {
         id: outgoing.id,
@@ -606,7 +608,7 @@ class NodeCore extends EventEmitter {
     const incoming = this.incomingTransfers.get(transferId);
     if (incoming && incoming.status === 'active') {
       incoming.status = 'canceled';
-      incoming.error = '对方取消了传输';
+      incoming.error = t('main.transfer.peerCanceled');
       for (const file of incoming.files) {
         try {
           file.socket && file.socket.destroy();
@@ -787,8 +789,8 @@ class NodeCore extends EventEmitter {
 
   _requirePeer(peerKey) {
     const peer = this.peers.get(peerKey);
-    if (!peer) throw new Error('对方不在线');
-    if (!peer.online) throw new Error('对方已离线');
+    if (!peer) throw new Error(t('main.error.peerOffline'));
+    if (!peer.online) throw new Error(t('main.error.peerOffline'));
     return peer;
   }
 
@@ -800,11 +802,11 @@ class NodeCore extends EventEmitter {
    * 配对文件。已认证联系人则沿用 pairing key 自动恢复。
    */
   async _ensureSecure(peerKey) {
-    if (!this.online) throw new Error('已下线，上线后才能发送消息');
+    if (!this.online) throw new Error(t('main.network.error.offlineSendMessage'));
     const peer = this._requirePeer(peerKey);
     if (this.secure.isActive(peerKey)) return this.secure.getSession(peerKey);
     if (this.secure.autoPaused.has(peerKey)) {
-      throw new Error('请先重新认证后再继续');
+      throw new Error(t('main.network.error.reverifyFirst'));
     }
 
     const deadline = Date.now() + SECURE_ENSURE_TIMEOUT_MS;
@@ -813,9 +815,9 @@ class NodeCore extends EventEmitter {
     while (Date.now() < deadline) {
       if (this.secure.isActive(peerKey)) return this.secure.getSession(peerKey);
       if (this.secure.autoPaused.has(peerKey)) {
-        throw new Error('请先重新认证后再继续');
+        throw new Error(t('main.network.error.reverifyFirst'));
       }
-      if (!peer.online) throw new Error('对方已离线');
+      if (!peer.online) throw new Error(t('main.error.peerOffline'));
       if (!this.secure.hasPending(peerKey) && Date.now() >= nextStartAt) {
         nextStartAt = Date.now() + 1000;
         try {
@@ -831,7 +833,7 @@ class NodeCore extends EventEmitter {
       });
     }
     const detail = lastError && lastError.message ? `：${lastError.message}` : '';
-    throw new Error(`自动建立加密会话超时${detail}`);
+    throw new Error(t('main.network.error.encryptedSessionTimeout'));
   }
 
   _touch(record, force = false) {

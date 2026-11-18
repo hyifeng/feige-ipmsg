@@ -1,5 +1,9 @@
 'use strict';
 
+const { t } = require('../i18n');
+
+// 历史预览中的类型标记使用稳定的规范 token（例如 [图片] / [文件]），
+// 便于旧数据迁移和全文检索；渲染层会按当前语言重新映射显示文本。
 function previewOf(message) {
   if (message.kind === 'image') {
     return `[图片] ${String(message.name || '图片').slice(0, 80)}`;
@@ -25,7 +29,7 @@ function normalizeMessage(raw) {
   };
 
   if (!message.id || !message.peerKey) {
-    throw new Error('历史消息缺少 id 或 peerKey');
+    throw new Error(t('main.error.invalidHistoryMessage'));
   }
 
   if (raw.status) message.status = String(raw.status).slice(0, 24);

@@ -3,12 +3,12 @@
 const fs = require('node:fs');
 const { BrowserWindow, Menu } = require('electron');
 const {
-  APP_NAME,
   IS_DEV,
   ICON_PATH,
   PRELOAD_PATH,
   RENDERER_INDEX,
 } = require('./config');
+const { t } = require('../i18n');
 const { createTray } = require('./shell');
 const { emit, selfInfo } = require('./info');
 
@@ -19,7 +19,7 @@ function createWindow(ctx) {
     minWidth: 980,
     minHeight: 640,
     show: false,
-    title: `${APP_NAME} · 局域网快传`,
+    title: t('main.app.title'),
     backgroundColor: '#070b14',
     autoHideMenuBar: true,
     icon: fs.existsSync(ICON_PATH) ? ICON_PATH : undefined,

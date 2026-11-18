@@ -1,5 +1,7 @@
 'use strict';
 
+const { t } = require('../../i18n');
+
 const { EventEmitter } = require('node:events');
 
 const MAX_QUEUE = 256;
@@ -92,7 +94,7 @@ class HubClient extends EventEmitter {
     if (this.stopped || !this.url) return;
     if (this.socket && (this.socket.readyState === 0 || this.socket.readyState === 1)) return;
     if (typeof this.WebSocketImpl !== 'function') {
-      this._setStatus('error', '当前运行环境不支持 WebSocket');
+      this._setStatus('error', t('main.hub.websocketUnsupported'));
       return;
     }
 
@@ -141,7 +143,7 @@ class HubClient extends EventEmitter {
       const reason = String(event.reason || '');
       if (event.code === 1008 && reason === 'replaced') {
         this.stopped = true;
-        this._setStatus('replaced', '同一身份已在其他地方上线');
+        this._setStatus('replaced', t('main.hub.identityReplaced'));
         return;
       }
       this._setStatus('closed');

@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.js';
 import { dayKey, dayLabel, escapeHtml, formatTime, linkify } from '../core/format.js';
 import { icon } from '../core/icons.js';
 import { toast } from '../core/notifications.js';
@@ -54,7 +55,7 @@ async function loadHistoryForPeer(peerKey, options = {}) {
     state.historyLoaded.add(peerKey);
     state.historyMore.set(peerKey, !!(result && result.hasMore));
   } catch (error) {
-    toast(`加载聊天记录失败：${error.message || error}`, 'error');
+    toast(t('chat.error.loadHistory', { error: error.message || error }), 'error');
   } finally {
     state.historyLoading.delete(peerKey);
   }
@@ -82,13 +83,15 @@ function loadOlderMessages() {
   loadHistoryForPeer(peerKey, { before: list[0].at, prepend: true });
 }
 
-function addSystemMessage(peerKey, text) {
-  if (!peerKey || !text) return;
+function addSystemMessage(peerKey, key, params = {}) {
+  if (!peerKey || !key) return;
   const message = {
     id: `secure-system:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`,
     direction: 'in',
     kind: 'system',
-    text,
+    i18nKey: key,
+    i18nParams: params,
+    text: t(key, params),
     at: Date.now(),
   };
   appendMessage(peerKey, message);
@@ -174,15 +177,15 @@ function renderMessages(forceScroll = false, options = {}) {
     box.innerHTML = `
       <div class="empty-chat">
         <span class="ico">${icon(loading ? 'clock' : 'send', 24)}</span>
-        <b>${loading ? '正在加载聊天记录…' : '还没有消息'}</b>
-        <small>${loading ? '从本地历史中读取' : '打个招呼，或者直接拖入文件'}</small>
+        <b>${loading ? t('chat.loading.title') : t('chat.empty.title')}</b>
+        <small>${loading ? t('chat.loading.hint') : t('chat.empty.hint')}</small>
       </div>`;
     return;
   }
 
   const chunks = [];
   if (state.historyMore.get(state.active)) {
-    chunks.push(`<div class="load-earlier-wrap"><button class="load-earlier" data-load-earlier>${icon('clock', 13)}<span>加载更早的聊天记录</span></button></div>`);
+    chunks.push(`<div class="load-earlier-wrap"><button class="load-earlier" data-load-earlier>${icon('clock', 13)}<span>${t('chat.loadEarlier')}</span></button></div>`);
   }
   let lastDay = '';
   for (const message of list) {
@@ -202,9 +205,10 @@ function renderMessages(forceScroll = false, options = {}) {
 function messageHtml(message) {
   if (message.kind === 'system') {
     const action = message.action === 'open-secure' && message.secureSessionId
-      ? `<button type="button" class="sys-note-action" data-open-secure="${escapeHtml(message.secureSessionId)}">${icon('shield', 13)}<span>打开认证</span></button>`
+      ? `<button type="button" class="sys-note-action" data-open-secure="${escapeHtml(message.secureSessionId)}">${icon('shield', 13)}<span>${t('chat.system.openVerification')}</span></button>`
       : '';
-    return `<div class="sys-note ${action ? 'action' : ''}"><span class="sys-note-text">${escapeHtml(message.text)}</span>${action}</div>`;
+    const text = message.i18nKey ? t(message.i18nKey, message.i18nParams) : message.text;
+    return `<div class="sys-note ${action ? 'action' : ''}"><span class="sys-note-text">${escapeHtml(text)}</span>${action}</div>`;
   }
   const out = message.direction === 'out';
   const meta = `<div class="msg-meta"><span>${formatTime(message.at)}</span>${out ? messageStatusIcon(message) : ''}</div>`;
@@ -218,12 +222,12 @@ function messageHtml(message) {
 
 function messageStatusIcon(message) {
   if (message.status === 'read') {
-    return `<span class="msg-status read" title="对方已收到">${icon('check-check', 12)}</span>`;
+    return `<span class="msg-status read" title="${t('chat.message.delivered')}">${icon('check-check', 12)}</span>`;
   }
   if (message.status === 'error') {
-    return `<span class="msg-status error" title="发送失败">${icon('alert', 12)}</span>`;
+    return `<span class="msg-status error" title="${t('chat.sendFailed')}">${icon('alert', 12)}</span>`;
   }
-  return `<span class="msg-status" title="已发送">${icon('check', 12)}</span>`;
+  return `<span class="msg-status" title="${t('common.status.sent')}">${icon('check', 12)}</span>`;
 }
 
 function findMessageById(id) {

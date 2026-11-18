@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.js';
 import { escapeHtml, formatBytes } from '../core/format.js';
 import { icon } from '../core/icons.js';
 import { toast } from '../core/notifications.js';
@@ -26,33 +27,33 @@ function imageStatus(message) {
   let label;
   let short;
   if (stateValue === 'done') {
-    label = message.direction === 'out' ? '已发送' : '已接收';
+    label = t(message.direction === 'out' ? 'common.status.sent' : 'common.status.received');
     short = label;
   } else if (stateValue === 'active') {
-    label = `接收中 ${percent}%`;
-    short = '传输中';
+    label = t('image.status.receiving', { percent });
+    short = t('common.status.transferring');
   } else if (stateValue === 'waiting') {
-    label = message.direction === 'out' ? '等待对方接收' : '准备接收';
-    short = '等待接收';
+    label = t(message.direction === 'out' ? 'image.status.waitingPeer' : 'image.status.ready');
+    short = t('common.status.waitingToReceive');
   } else if (stateValue === 'error') {
-    label = (message.imageState && message.imageState.error) || '图片传输失败';
-    short = '失败';
+    label = (message.imageState && message.imageState.error) || t('image.status.failed');
+    short = t('common.status.failed');
   } else if (stateValue === 'declined') {
-    label = '对方拒绝接收';
-    short = '被拒绝';
+    label = t('transfer.peerDeclined');
+    short = t('common.status.rejected');
   } else if (stateValue === 'canceled') {
-    label = '图片传输已取消';
-    short = '已取消';
+    label = t('image.status.canceled');
+    short = t('common.status.canceled');
   } else {
-    label = '等待传输';
-    short = '等待';
+    label = t('image.status.waiting');
+    short = t('image.waiting');
   }
   return { state: stateValue, percent, label, short, error: stateValue === 'error' };
 }
 
 function imageMessageHtml(message) {
   const status = imageStatus(message);
-  const name = message.name || '图片';
+  const name = message.name || t('common.image');
   const size = Number(message.size) || (state.transfers.get(message.transferId)?.totalBytes) || 0;
   const thumb = typeof message.thumb === 'string' ? message.thumb : '';
   const canOpen = imagePath(message) || thumb;
@@ -60,7 +61,7 @@ function imageMessageHtml(message) {
   const active = status.state === 'active' || status.state === 'waiting';
   const imageTag = thumb
     ? `<img src="${escapeHtml(thumb)}" alt="${escapeHtml(name)}" ${openAttr} loading="lazy" />`
-    : `<div class="image-placeholder" ${openAttr}><span class="ico">${icon('image', 30)}</span><small>${imagePath(message) ? '点击查看图片' : '图片接收后显示'}</small></div>`;
+    : `<div class="image-placeholder" ${openAttr}><span class="ico">${icon('image', 30)}</span><small>${imagePath(message) ? t('image.placeholder.click') : t('image.placeholder.afterReceive')}</small></div>`;
   return `
     <div class="image-msg" data-image-transfer="${escapeHtml(message.transferId || '')}" data-image-status="${escapeHtml(status.state)}">
       <div class="image-card ${status.error ? 'error' : ''}" ${openAttr}>
@@ -103,7 +104,7 @@ function updateImageCards(transfer) {
       if (placeholder) {
         placeholder.setAttribute('data-image-open', '1');
         const hint = placeholder.querySelector('small');
-        if (hint) hint.textContent = '点击查看图片';
+        if (hint) hint.textContent = t('image.placeholder.click');
       }
     }
   }
@@ -126,17 +127,17 @@ function closeImageMenu() {
 async function saveImageMessage(message) {
   const source = imagePath(message);
   if (!source) {
-    toast('原图文件不存在，可能已被移动或删除', 'warn');
+    toast(t('image.error.originalMissing'), 'warn');
     return;
   }
   try {
     const saved = await window.feige.saveFileCopy({
       path: source,
-      name: message.name || '图片',
+      name: message.name || t('common.image'),
     });
-    if (saved) toast('图片已转存', 'success');
+    if (saved) toast(t('image.toast.saved'), 'success');
   } catch (error) {
-    toast(error.message || '转存失败', 'error');
+    toast(error.message || t('image.error.saveCopy'), 'error');
   }
 }
 
@@ -146,8 +147,8 @@ function openImageMenu(event, message) {
   const menu = document.createElement('div');
   menu.className = 'image-menu';
   menu.innerHTML = `
-    <button data-image-save>${icon('download', 15)}<span>转存到…</span></button>
-    ${source ? `<button data-image-folder>${icon('folder', 15)}<span>在文件夹中显示</span></button>` : ''}`;
+    <button data-image-save>${icon('download', 15)}<span>${t('image.action.saveCopy')}</span></button>
+    ${source ? `<button data-image-folder>${icon('folder', 15)}<span>${t('image.action.showInFolder')}</span></button>` : ''}`;
   document.body.appendChild(menu);
   const width = menu.offsetWidth;
   const height = menu.offsetHeight;
@@ -190,25 +191,25 @@ async function openImageLightbox(message) {
   const thumb = typeof message.thumb === 'string' ? message.thumb : '';
   const status = imageStatus(message);
   if (message.direction === 'in' && status.state !== 'done' && !message.localPath) {
-    toast(status.state === 'error' ? '图片传输失败，无法查看原图' : '原图还在接收中，请稍候再打开', 'info');
+    toast(t(status.state === 'error' ? 'image.error.cannotOpenOriginal' : 'image.error.originalReceiving'), 'info');
     return;
   }
   if (!source && !thumb) {
-    toast('图片还未接收完成', 'warn');
+    toast(t('image.error.incomplete'), 'warn');
     return;
   }
   state.modal = { type: 'image-view' };
-  const title = message.name || '图片';
+  const title = message.name || t('common.image');
   dom.modalRoot.innerHTML = `
     <div class="image-view" data-modal-backdrop data-image-view>
-      <button class="lightbox-close" data-close-modal title="关闭">${icon('x', 20)}</button>
-      <button class="lightbox-zoom" data-lightbox-zoom>原始大小</button>
+      <button class="lightbox-close" data-close-modal title="${t('common.close')}">${icon('x', 20)}</button>
+      <button class="lightbox-zoom" data-lightbox-zoom>${t('image.lightbox.actualSize')}</button>
       <div class="lightbox-frame" data-lightbox-frame>
         <img id="lightboxImage" src="${escapeHtml(thumb)}" alt="${escapeHtml(title)}" />
         <div class="lightbox-caption">
           <span>${escapeHtml(title)}</span>
           <span class="mono">${formatBytes(message.size || 0)}</span>
-          <span class="lightbox-hint" id="lightboxHint">${source ? '正在加载原图…' : '仅显示缩略图，原图文件不可用'}</span>
+          <span class="lightbox-hint" id="lightboxHint">${source ? t('image.lightbox.loading') : t('image.lightbox.thumbnailOnly')}</span>
         </div>
       </div>
     </div>`;
@@ -218,7 +219,7 @@ async function openImageLightbox(message) {
   const zoomButton = dom.modalRoot.querySelector('[data-lightbox-zoom]');
   const toggleActual = () => {
     const actual = view.classList.toggle('actual');
-    zoomButton.textContent = actual ? '适应窗口' : '原始大小';
+    zoomButton.textContent = t(actual ? 'image.lightbox.fitWindow' : 'image.lightbox.actualSize');
     view.scrollTop = 0;
     view.scrollLeft = 0;
   };
@@ -237,12 +238,12 @@ async function openImageLightbox(message) {
       if (image.isConnected) {
         image.src = full;
         image.classList.remove('loading');
-        if (hint) hint.textContent = '点击图片切换原始大小';
+        if (hint) hint.textContent = t('image.lightbox.toggleHint');
       }
     } catch (error) {
       image.classList.remove('loading');
-      if (hint) hint.textContent = '原图读取失败，当前为缩略图';
-      toast(error.message || '原图读取失败', 'warn');
+      if (hint) hint.textContent = t('image.lightbox.loadFailedThumbnail');
+      toast(error.message || t('image.error.loadOriginal'), 'warn');
     }
   }
 }
@@ -251,7 +252,7 @@ function blobToDataUrl(blob) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result || ''));
-    reader.onerror = () => reject(new Error('读取图片失败'));
+    reader.onerror = () => reject(new Error(t('image.error.read')));
     reader.readAsDataURL(blob);
   });
 }
@@ -270,7 +271,7 @@ function createImageThumbnail(dataUrl) {
           canvas.width = width;
           canvas.height = height;
           const context = canvas.getContext('2d');
-          if (!context) throw new Error('无法创建缩略图');
+          if (!context) throw new Error(t('image.error.thumbnailFailed'));
           context.drawImage(image, 0, 0, width, height);
           const quality = [0.68, 0.56, 0.46][attempt];
           const thumb = canvas.toDataURL('image/webp', quality);
@@ -294,23 +295,23 @@ function openImagePreview(image) {
   if (!image || state.modal) return;
   const peer = activePeer();
   if (!peer || !peer.online) {
-    toast('请先选择一位在线同事', 'warn');
+    toast(t('common.selectOnlinePeer'), 'warn');
     return;
   }
   if (!state.self.ready) {
-    toast('网络服务尚未就绪', 'warn');
+    toast(t('common.networkNotReady'), 'warn');
     return;
   }
   state.modal = { type: 'image-preview' };
   dom.modalRoot.innerHTML = `
     <div class="modal-backdrop" data-modal-backdrop>
-      <div class="modal image-send-modal" role="dialog" aria-modal="true" aria-label="发送图片">
+      <div class="modal image-send-modal" role="dialog" aria-modal="true" aria-label="${t('image.send')}">
         <div class="modal-head">
           <div>
-            <h3>发送图片</h3>
-            <p>发送给 ${escapeHtml(peer.user)}</p>
+            <h3>${t('image.send')}</h3>
+            <p>${t('image.preview.to', { name: escapeHtml(peer.user) })}</p>
           </div>
-          <button class="modal-close" data-close-modal title="关闭">${icon('x', 17)}</button>
+          <button class="modal-close" data-close-modal title="${t('common.close')}">${icon('x', 17)}</button>
         </div>
         <div class="image-preview-box">
           <img src="${escapeHtml(image.preview)}" alt="${escapeHtml(image.name)}" />
@@ -319,11 +320,11 @@ function openImagePreview(image) {
           <span class="image-preview-name" title="${escapeHtml(image.name)}">${escapeHtml(image.name)}</span>
           <span class="mono">${formatBytes(image.size)}</span>
         </div>
-        <input class="input image-caption-input" id="imageCaption" maxlength="500" placeholder="添加图片说明（可选）" />
-        <div class="image-preview-note">${icon('lock', 12)} 图片会自动通过加密会话传输；接收后会直接显示在聊天中。</div>
+        <input class="input image-caption-input" id="imageCaption" maxlength="500" placeholder="${t('image.preview.caption')}" />
+        <div class="image-preview-note">${icon('lock', 12)} ${t('image.preview.note')}</div>
         <div class="modal-actions">
-          <button class="btn ghost" data-close-modal>取消</button>
-          <button class="btn primary" id="imageSendBtn">${icon('send', 15)} 发送图片</button>
+          <button class="btn ghost" data-close-modal>${t('common.cancel')}</button>
+          <button class="btn primary" id="imageSendBtn">${icon('send', 15)} ${t('image.send')}</button>
         </div>
       </div>
     </div>`;
@@ -339,7 +340,7 @@ function openImagePreview(image) {
   });
   sendButton.addEventListener('click', async () => {
     sendButton.disabled = true;
-    sendButton.textContent = '处理中…';
+    sendButton.textContent = t('image.preview.processing');
     try {
       const thumb = await createImageThumbnail(image.preview);
       await window.feige.sendImage({
@@ -350,37 +351,37 @@ function openImagePreview(image) {
         caption: captionInput.value.trim(),
       });
       closeModal();
-      toast('正在发送图片…', 'success');
+      toast(t('image.toast.sending'), 'success');
     } catch (error) {
       sendButton.disabled = false;
-      sendButton.innerHTML = `${icon('send', 15)} 发送图片`;
-      toast(error.message || '发送图片失败', 'error');
+      sendButton.innerHTML = `${icon('send', 15)} ${t('image.send')}`;
+      toast(error.message || t('image.error.sendFailed'), 'error');
     }
   });
 }
 
 async function chooseImageForActive() {
   if (!state.self.online) {
-    toast('已下线，上线后才能发送图片', 'warn');
+    toast(t('image.offline'), 'warn');
     return;
   }
   const peer = activePeer();
   if (!peer || !peer.online) {
-    toast('请先选择一位在线同事', 'warn');
+    toast(t('common.selectOnlinePeer'), 'warn');
     return;
   }
   try {
     const image = await window.feige.pickImage();
     if (image) openImagePreview(image);
   } catch (error) {
-    toast(error.message || '无法选择图片', 'error');
+    toast(error.message || t('image.error.select'), 'error');
   }
 }
 
 async function handleImagePaste(event) {
   if (!state.active || state.modal || !state.self.ready) return;
   if (!state.self.online) {
-    toast('已下线，上线后才能发送图片', 'warn');
+    toast(t('image.offline'), 'warn');
     return;
   }
   const items = [...(event.clipboardData?.items || [])];
@@ -391,15 +392,15 @@ async function handleImagePaste(event) {
   event.preventDefault();
   try {
     const file = imageItem.getAsFile();
-    if (!file) throw new Error('剪贴板中没有图片');
+    if (!file) throw new Error(t('image.error.clipboardEmpty'));
     const dataUrl = await blobToDataUrl(file);
     const image = await window.feige.savePastedImage({
       dataUrl,
-      name: file.name || '粘贴的图片.png',
+      name: file.name || t('image.defaultPastedName'),
     });
     openImagePreview(image);
   } catch (error) {
-    toast(error.message || '无法读取剪贴板图片', 'error');
+    toast(error.message || t('image.error.clipboardRead'), 'error');
   }
 }
 

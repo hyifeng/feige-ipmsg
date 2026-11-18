@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.js';
 import { escapeHtml } from '../core/format.js';
 import { icon } from '../core/icons.js';
 import { toast } from '../core/notifications.js';
@@ -15,41 +16,41 @@ function openAliasModal(peer) {
   if (!window.feige || !peer) return;
   const display = displayFor(peer.key, peer.user);
   if (!display.verified) {
-    toast('请先完成身份认证，再设置本地别名', 'warn');
+    toast(t('alias.error.notVerified'), 'warn');
     return;
   }
   const claimed = display.claimed || peer.user || '';
   dom.modalRoot.innerHTML = `
     <div class="modal-backdrop" data-modal-backdrop>
-      <div class="modal alias-modal" role="dialog" aria-modal="true" aria-label="命名设备">
+      <div class="modal alias-modal" role="dialog" aria-modal="true" aria-label="${t('alias.title.nameDevice')}">
         <div class="modal-head">
           <div>
-            <h3>${display.alias ? '修改本地别名' : '设置本地别名'}</h3>
-            <p>别名只保存在本机，不会发送给对方</p>
+            <h3>${t(display.alias ? 'alias.title.edit' : 'alias.action.set')}</h3>
+            <p>${t('alias.hint.localOnly')}</p>
           </div>
-          <button class="modal-close" data-close-modal title="关闭">${icon('x', 17)}</button>
+          <button class="modal-close" data-close-modal title="${t('common.close')}">${icon('x', 17)}</button>
         </div>
 
         <div class="alias-body">
           <div class="alias-fingerprint-row">
-            <span class="alias-fingerprint-label">身份指纹</span>
+            <span class="alias-fingerprint-label">${t('alias.label.fingerprint')}</span>
             <code class="alias-fingerprint">${escapeHtml(display.fingerprint)}</code>
           </div>
-          <div class="alias-verify-hint">该设备已通过 6 位码完成身份认证。别名只保存在本机，不会发送给对方。</div>
-          ${claimed ? `<div class="alias-claimed">对方自称：<b>${escapeHtml(claimed)}</b></div>` : ''}
+          <div class="alias-verify-hint">${t('alias.hint.verified')}</div>
+          ${claimed ? `<div class="alias-claimed">${t('alias.claimedLabel')}<b>${escapeHtml(claimed)}</b></div>` : ''}
 
           <label class="field">
-            <span>本地别名</span>
-            <input class="input" id="aliasInput" maxlength="32" value="${escapeHtml(display.alias || claimed)}" placeholder="例如：张三 · 设计部" />
-            <small>留空则自动使用对方自称；同名不同指纹会分别提示。</small>
+            <span>${t('alias.label.localAlias')}</span>
+            <input class="input" id="aliasInput" maxlength="32" value="${escapeHtml(display.alias || claimed)}" placeholder="${t('alias.placeholder.example')}" />
+            <small>${t('alias.hint.leaveBlank')}</small>
           </label>
         </div>
 
         <div class="modal-actions">
-          <button class="btn ghost alias-clear" id="aliasClear" ${display.alias ? '' : 'disabled'}>清除别名</button>
-          <span class="alias-hint">保存后仅影响当前设备的显示</span>
-          <button class="btn ghost" data-close-modal>取消</button>
-          <button class="btn primary" id="aliasSave">保存</button>
+          <button class="btn ghost alias-clear" id="aliasClear" ${display.alias ? '' : 'disabled'}>${t('alias.action.clear')}</button>
+          <span class="alias-hint">${t('alias.hint.saveScope')}</span>
+          <button class="btn ghost" data-close-modal>${t('common.cancel')}</button>
+          <button class="btn primary" id="aliasSave">${t('common.save')}</button>
         </div>
       </div>
     </div>`;
@@ -66,7 +67,7 @@ function openAliasModal(peer) {
       const duplicate = [...state.contacts.entries()]
         .find(([key, contact]) => key !== peer.key && contact.alias === alias);
       if (duplicate) {
-        toast(`“${alias}”已用于另一台设备（${duplicate[1].fingerprint || '未知指纹'}），请核对指纹`, 'warn');
+        toast(t('alias.error.duplicate', { alias, fingerprint: duplicate[1].fingerprint || t('common.unknownFingerprint') }), 'warn');
       }
     }
     saveBtn.disabled = true;
@@ -80,7 +81,7 @@ function openAliasModal(peer) {
           alias,
           verified: true,
           unnamed: false,
-          label: alias || display.claimed || '已验证设备',
+          label: alias || display.claimed || t('common.verifiedDevice'),
           fingerprint: display.fingerprint,
           claimed: display.claimed,
         };
@@ -91,11 +92,11 @@ function openAliasModal(peer) {
       closeModal(false);
       renderPeers();
       renderChatHead(activePeer() || peer);
-      toast(alias ? `已设置本地别名“${alias}”` : '已清除本地别名，将显示对方自称的名字', 'success');
+      toast(alias ? t('alias.toast.saved', { alias }) : t('alias.toast.cleared'), 'success');
     } catch (error) {
       saveBtn.disabled = false;
       clearBtn.disabled = false;
-      toast(error.message || '保存别名失败', 'error');
+      toast(error.message || t('alias.error.saveFailed'), 'error');
     }
   };
 

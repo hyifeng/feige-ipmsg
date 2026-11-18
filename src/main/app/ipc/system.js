@@ -1,10 +1,11 @@
 'use strict';
 
 const { ipcMain, shell } = require('electron');
+const { t } = require('../../i18n');
 
 function registerSystemIpc(ctx) {
   ipcMain.handle('feige:open-path', async (_event, target) => {
-    if (typeof target !== 'string' || !target) return '路径为空';
+    if (typeof target !== 'string' || !target) return t('main.error.emptyPath');
     return shell.openPath(target);
   });
 

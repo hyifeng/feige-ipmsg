@@ -1,5 +1,7 @@
 'use strict';
 
+const { t } = require('../i18n');
+
 const crypto = require('node:crypto');
 
 function sha256(...parts) {
@@ -47,7 +49,7 @@ function encryptFrame(key, noncePrefix, counter, payload) {
 
 function decryptFrame(key, noncePrefix, expectedCounter, frame) {
   const counter = Number(frame.n);
-  if (counter !== expectedCounter) throw new Error('加密消息顺序错误');
+  if (counter !== expectedCounter) throw new Error(t('main.secure.error.messageOrder'));
   const nonce = Buffer.alloc(12);
   noncePrefix.copy(nonce, 0);
   nonce.writeUInt32BE(counter >>> 0, 8);

@@ -1,3 +1,4 @@
+import { applyStaticTranslations, initI18n, onLocaleChange, t } from './i18n/index.js';
 import { hydrateIcons } from './core/icons.js';
 import { dom, forcedTheme, isDemo, mergeSelf, state, wantPanel } from './core/state.js';
 import { bindStaticEvents, handleEvent } from './features/events.js';
@@ -58,14 +59,25 @@ function cacheDom() {
 }
 
 async function init() {
+  let preferredLanguage = '';
+  try {
+    preferredLanguage = window.feige ? await window.feige.getLanguage() : '';
+  } catch {
+    /* 无法读取语言偏好时使用默认语言 */
+  }
+  initI18n(preferredLanguage);
   cacheDom();
   hydrateIcons();
   bindStaticEvents();
+  onLocaleChange(() => {
+    applyStaticTranslations();
+    renderAll();
+  });
   applyTheme(localStorage.getItem('feige-theme') || 'dark', false);
   renderAll();
 
   if (!window.feige) {
-    mountLockUnavailable('预加载脚本未就绪，请重启应用。');
+    mountLockUnavailable(t('app.error.preload'));
     return;
   }
 
@@ -101,7 +113,7 @@ async function init() {
       onUnlocked: finishUnlock,
     });
   } catch (error) {
-    mountLockUnavailable(`无法读取本地资料：${error.message || error}`);
+    mountLockUnavailable(t('app.error.readLocalData', { error: error.message || error }));
   }
 }
 
@@ -134,7 +146,7 @@ function seedDemo() {
   const now = Date.now();
   state.self = {
     id: 'demo-self',
-    nickname: '飞鸽用户',
+    nickname: t('app.defaultUserName'),
     host: 'spirit-linux',
     port: 24250,
     addresses: ['192.168.31.42'],
@@ -142,7 +154,7 @@ function seedDemo() {
     ready: true,
   };
   state.settings = {
-    nickname: '飞鸽用户',
+    nickname: t('app.defaultUserName'),
     port: 24250,
     downloadDir: '/home/spirithuang/Downloads/飞鸽接收',
     autoAccept: false,

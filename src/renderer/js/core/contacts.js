@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.js';
 import { state } from './state.js';
 
 function fingerprintOf(peerKey) {
@@ -42,7 +43,7 @@ function displayFor(peerKey, claimed = '') {
       verified: true,
       unnamed: false,
       autoName: !alias,
-      label: alias || claimedName || '已验证设备',
+      label: alias || claimedName || t('common.verifiedDevice'),
       fingerprint,
       claimed: claimedName,
     };
@@ -55,7 +56,7 @@ function displayFor(peerKey, claimed = '') {
     // unnamed 只表示“连自称名字都没有”，不是“未认证”。
     unnamed: !claimedName,
     autoName: true,
-    label: claimedName || '未认证设备',
+    label: claimedName || t('common.unverifiedDevice'),
     fingerprint,
     claimed: claimedName,
   };

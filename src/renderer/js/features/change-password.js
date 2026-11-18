@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.js';
 import { icon } from '../core/icons.js';
 import { toast } from '../core/notifications.js';
 import { dom, state } from '../core/state.js';
@@ -9,33 +10,33 @@ function openChangePasswordModal(onDone = () => {}) {
   state.modal = { type: 'change-pass', onDone };
   dom.modalRoot.innerHTML = `
     <div class="modal-backdrop" data-modal-backdrop>
-      <div class="modal change-password-modal" role="dialog" aria-modal="true" aria-label="修改本地密码">
+      <div class="modal change-password-modal" role="dialog" aria-modal="true" aria-label="${t('password.title.change')}">
         <div class="modal-head">
           <div>
-            <h3>修改本地密码</h3>
-            <p>只重新包裹本地数据密钥，不会重新加密聊天记录</p>
+            <h3>${t('password.title.change')}</h3>
+            <p>${t('password.subtitle')}</p>
           </div>
-          <button class="modal-close" data-close-modal title="关闭">${icon('x', 17)}</button>
+          <button class="modal-close" data-close-modal title="${t('common.close')}">${icon('x', 17)}</button>
         </div>
         <div class="settings-grid">
           <label class="field">
-            <span>原密码</span>
-            <input class="input" id="oldLocalPass" type="password" autocomplete="current-password" spellcheck="false" placeholder="输入当前本地密码" />
+            <span>${t('password.label.current')}</span>
+            <input class="input" id="oldLocalPass" type="password" autocomplete="current-password" spellcheck="false" placeholder="${t('password.placeholder.current')}" />
           </label>
           <label class="field">
-            <span>新密码</span>
-            <input class="input" id="newLocalPass" type="password" autocomplete="new-password" spellcheck="false" placeholder="至少 ${MIN_PASSWORD_LENGTH} 位" />
+            <span>${t('password.label.new')}</span>
+            <input class="input" id="newLocalPass" type="password" autocomplete="new-password" spellcheck="false" placeholder="${t('password.placeholder.minLength', { count: MIN_PASSWORD_LENGTH })}" />
           </label>
           <label class="field">
-            <span>确认新密码</span>
-            <input class="input" id="confirmLocalPass" type="password" autocomplete="new-password" spellcheck="false" placeholder="再次输入新密码" />
+            <span>${t('password.label.confirmNew')}</span>
+            <input class="input" id="confirmLocalPass" type="password" autocomplete="new-password" spellcheck="false" placeholder="${t('password.placeholder.confirmNew')}" />
           </label>
           <div class="form-error" id="changePassError" role="alert" aria-live="assertive"></div>
-          <p class="change-pass-note">修改后下次启动需要使用新密码。已启用的「下次免密进入」会被关闭，可重新在设置中开启。</p>
+          <p class="change-pass-note">${t('password.note.afterChange')}</p>
         </div>
         <div class="modal-actions">
-          <button class="btn ghost" id="changePassCancel">取消</button>
-          <button class="btn primary" id="changePassSubmit">${icon('lock', 15)} 修改密码</button>
+          <button class="btn ghost" id="changePassCancel">${t('common.cancel')}</button>
+          <button class="btn primary" id="changePassSubmit">${icon('lock', 15)} ${t('password.action.change')}</button>
         </div>
       </div>
     </div>`;
@@ -60,39 +61,39 @@ function openChangePasswordModal(onDone = () => {}) {
     const oldPass = oldInput.value;
     const newPass = newInput.value;
     if (!oldPass) {
-      setError('请输入原密码');
+      setError(t('password.error.currentRequired'));
       oldInput.focus();
       return;
     }
     if ([...newPass].length < MIN_PASSWORD_LENGTH) {
-      setError(`新密码至少需要 ${MIN_PASSWORD_LENGTH} 位`);
+      setError(t('password.error.tooShort', { count: MIN_PASSWORD_LENGTH }));
       newInput.focus();
       return;
     }
     if (newPass !== confirmInput.value) {
-      setError('两次输入的新密码不一致');
+      setError(t('password.error.mismatch'));
       confirmInput.focus();
       return;
     }
 
     setError('');
     submit.disabled = true;
-    submit.textContent = '修改中…';
+    submit.textContent = t('password.action.changing');
     try {
       const result = await window.feige.changeLocalPass({ oldPass, newPass });
       if (!result || !result.ok) {
         submit.disabled = false;
-        submit.innerHTML = `${icon('lock', 15)} 修改密码`;
-        setError((result && result.message) || '修改失败，请重试');
+        submit.innerHTML = `${icon('lock', 15)} ${t('password.action.change')}`;
+        setError((result && result.message) || t('password.error.changeFailed'));
         if (result && result.code === 'wrong-password') oldInput.select();
         return;
       }
       closeModal();
-      toast('本地密码已修改，下次启动请使用新密码', 'success');
+      toast(t('password.toast.changed'), 'success');
     } catch (err) {
       submit.disabled = false;
-      submit.innerHTML = `${icon('lock', 15)} 修改密码`;
-      setError('无法连接主进程，请重启应用后重试');
+      submit.innerHTML = `${icon('lock', 15)} ${t('password.action.change')}`;
+      setError(t('common.mainProcessUnavailable'));
       console.error('[feige] 修改本地密码失败', err);
     }
   };

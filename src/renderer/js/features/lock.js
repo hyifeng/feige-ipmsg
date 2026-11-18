@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.js';
 import { escapeHtml } from '../core/format.js';
 import { icon } from '../core/icons.js';
 import { toast } from '../core/notifications.js';
@@ -14,7 +15,7 @@ function passwordField({ id, label, placeholder, autocomplete }) {
       <span>${label}</span>
       <span class="lock-input-wrap">
         <input id="${id}" type="password" placeholder="${placeholder}" autocomplete="${autocomplete}" spellcheck="false" />
-        <button type="button" class="lock-toggle" data-lock-toggle="${id}" aria-label="显示密码" title="显示密码">${icon('eye', 18)}</button>
+        <button type="button" class="lock-toggle" data-lock-toggle="${id}" aria-label="${t('lock.password.show')}" title="${t('lock.password.show')}">${icon('eye', 18)}</button>
       </span>
     </label>`;
 }
@@ -53,7 +54,7 @@ function setBusy(busy, label) {
   if (confirm) confirm.disabled = busy;
   if (remember) remember.disabled = busy;
   const text = button.querySelector('span:last-child');
-  if (text) text.textContent = busy ? label : (button.dataset.label || '解锁');
+  if (text) text.textContent = busy ? label : (button.dataset.label || t('lock.action.unlock'));
 }
 
 function mountLockScreen({
@@ -72,33 +73,33 @@ function mountLockScreen({
   root.classList.remove('is-hidden');
 
   const setup = !configured;
-  const title = setup ? '设置本地密码' : '解锁飞鸽';
-  const subtitle = setup
-    ? '首次使用，请先设置本地密码。它只会保存在本机，用于加密昵称、联系人、身份密钥与聊天记录。'
-    : '输入本地密码以解密本机资料。密码错误将无法进入软件，也不会加载任何聊天记录。';
-  const submitLabel = setup ? '创建并解锁' : '解锁';
-  const hint = setup
-    ? '密码不会被上传，也无法找回。忘记密码将永久失去本机聊天记录和已认证的加密配对。'
-    : '本地密码只在本机用于解密，不会发送到局域网。连续输入错误不会泄露任何本地资料。';
+  const title = t(setup ? 'lock.title.setup' : 'lock.title.unlock');
+  const subtitle = t(setup
+    ? 'lock.subtitle.setup'
+    : 'lock.subtitle.unlock');
+  const submitLabel = t(setup ? 'lock.action.create' : 'lock.action.unlock');
+  const hint = t(setup
+    ? 'lock.hint.unrecoverable'
+    : 'lock.hint.localOnly');
 
   root.innerHTML = `
     <div class="lock-glow" aria-hidden="true"></div>
     <div class="lock-card" id="lockCard" role="dialog" aria-modal="true" aria-labelledby="lockTitle">
       ${lockEmblem(setup ? 'shield' : 'lock')}
-      <div class="lock-brand">飞鸽 <span>LOCAL VAULT</span></div>
+      <div class="lock-brand"><span class="lock-brand-name">${t('app.name')}</span> <span>LOCAL VAULT</span></div>
       <h1 id="lockTitle">${title}</h1>
       <p class="lock-subtitle">${subtitle}</p>
       <form class="lock-form" id="localPassForm" novalidate>
         ${passwordField({
           id: 'localPassInput',
-          label: '本地密码',
-          placeholder: setup ? '至少 6 位，建议使用长密码' : '输入本地密码',
+          label: t('password.localPassword'),
+          placeholder: t(setup ? 'lock.placeholder.newPassword' : 'lock.placeholder.password'),
           autocomplete: setup ? 'new-password' : 'current-password',
         })}
         ${setup ? passwordField({
           id: 'localPassConfirm',
-          label: '确认密码',
-          placeholder: '再次输入本地密码',
+          label: t('lock.label.confirmPassword'),
+          placeholder: t('lock.placeholder.confirmPassword'),
           autocomplete: 'new-password',
         }) : ''}
         ${autoUnlockAvailable ? `
@@ -106,11 +107,11 @@ function mountLockScreen({
             <input type="checkbox" id="localPassRemember" ${autoUnlockPreferred ? 'checked' : ''} />
             <span class="lock-remember-box" aria-hidden="true"></span>
             <span class="lock-remember-text">
-              <b>下次免密进入</b>
-              <small>使用系统钥匙串保存本地数据密钥，可在设置中随时关闭</small>
+              <b>${t('settings.autoUnlock.label')}</b>
+              <small>${t('lock.autoUnlock.hint')}</small>
             </span>
           </label>` : ''}
-        ${!autoUnlockAvailable ? `<div class="lock-note">${escapeHtml(autoUnlockMessage || '当前系统钥匙串不可用，无法启用免密登录')}</div>` : (autoUnlockEnabled ? '<div class="lock-note">免密登录已启用；如系统钥匙串不可用，本次仍需输入本地密码</div>' : '')}
+        ${!autoUnlockAvailable ? `<div class="lock-note">${escapeHtml(autoUnlockMessage || t('password.autoUnlock.unavailable'))}</div>` : (autoUnlockEnabled ? '<div class="lock-note">' + t('lock.autoUnlock.enabledHint') + '</div>' : '')}
         <div class="lock-error" id="localPassError" role="alert" aria-live="assertive"></div>
         <button class="btn primary lock-submit" id="localPassSubmit" type="submit" data-label="${submitLabel}">
           ${icon(setup ? 'shield' : 'unlock', 16)}<span>${submitLabel}</span>
@@ -120,7 +121,7 @@ function mountLockScreen({
       <div class="lock-badges">
         <span class="lock-badge">AES-256-GCM</span>
         <span class="lock-badge">scrypt</span>
-        <span class="lock-badge">仅本机</span>
+        <span class="lock-badge">${t('lock.badge.localOnly')}</span>
       </div>
     </div>`;
 
@@ -136,8 +137,8 @@ function mountLockScreen({
       const show = target.type === 'password';
       target.type = show ? 'text' : 'password';
       toggle.innerHTML = icon(show ? 'eye-off' : 'eye', 18);
-      toggle.setAttribute('aria-label', show ? '隐藏密码' : '显示密码');
-      toggle.title = show ? '隐藏密码' : '显示密码';
+      toggle.setAttribute('aria-label', t(show ? 'lock.password.hide' : 'lock.password.show'));
+      toggle.title = t(show ? 'lock.password.hide' : 'lock.password.show');
       target.focus();
     });
   }
@@ -147,7 +148,7 @@ function mountLockScreen({
     field.addEventListener('input', () => setLockError(''));
   }
 
-  if (corrupted) setLockError('本地密码校验文件已损坏，无法解锁');
+  if (corrupted) setLockError(t('lock.error.corrupted'));
   else if (autoUnlockError) setLockError(autoUnlockError);
 
   form.addEventListener('submit', async (event) => {
@@ -157,19 +158,19 @@ function mountLockScreen({
     const pass = input.value;
     if (setup) {
       if ([...pass].length < MIN_PASSWORD_LENGTH) {
-        setLockError(`本地密码至少需要 ${MIN_PASSWORD_LENGTH} 位`);
+        setLockError(t('lock.error.tooShort', { count: MIN_PASSWORD_LENGTH }));
         shakeCard();
         input.focus();
         return;
       }
       if (confirm && pass !== confirm.value) {
-        setLockError('两次输入的密码不一致');
+        setLockError(t('lock.error.mismatch'));
         shakeCard();
         confirm.focus();
         return;
       }
     } else if (!pass) {
-      setLockError('请输入本地密码');
+      setLockError(t('lock.error.required'));
       shakeCard();
       input.focus();
       return;
@@ -178,14 +179,14 @@ function mountLockScreen({
     const rememberInput = root.querySelector('#localPassRemember');
     const remember = rememberInput ? rememberInput.checked : undefined;
     error.textContent = '';
-    setBusy(true, setup ? '创建中…' : '验证中…');
+    setBusy(true, t(setup ? 'lock.action.creating' : 'lock.action.verifying'));
     try {
       const result = setup
         ? await window.feige.localPassSetup({ pass, remember })
         : await window.feige.localPassUnlock({ pass, remember });
       if (!result || !result.ok) {
         setBusy(false, '');
-        setLockError((result && result.message) || '无法解锁，请重试');
+        setLockError((result && result.message) || t('lock.error.unlockFailed'));
         shakeCard();
         if (result && result.code === 'wrong-password') input.select();
         else input.focus();
@@ -193,14 +194,14 @@ function mountLockScreen({
       }
 
       if (remember === true && result.autoUnlock && result.autoUnlock.saved === false) {
-        toast(result.autoUnlock.message || '未能启用下次免密登录', 'warn');
+        toast(result.autoUnlock.message || t('lock.error.autoUnlockFailed'), 'warn');
       }
       const snapshot = result.snapshot || await window.feige.state();
       hideLockScreen();
       await onUnlocked(snapshot);
     } catch (err) {
       setBusy(false, '');
-      setLockError('无法连接主进程，请重启应用后重试');
+      setLockError(t('common.mainProcessUnavailable'));
       shakeCard();
       console.error('[feige] 本地密码解锁失败', err);
     }
@@ -218,13 +219,13 @@ function mountLockUnavailable(message) {
     <div class="lock-glow" aria-hidden="true"></div>
     <div class="lock-card" role="alertdialog" aria-modal="true">
       <div class="lock-emblem warn" aria-hidden="true">${icon('alert', 30)}</div>
-      <div class="lock-brand">飞鸽 <span>LOCAL VAULT</span></div>
-      <h1>无法读取本地资料</h1>
-      <p class="lock-subtitle">${escapeHtml(message || '主进程未就绪，请重启应用。')}</p>
+      <div class="lock-brand"><span class="lock-brand-name">${t('app.name')}</span> <span>LOCAL VAULT</span></div>
+      <h1>${t('app.error.readTitle')}</h1>
+      <p class="lock-subtitle">${escapeHtml(message || t('lock.error.mainNotReady'))}</p>
       <div class="lock-form">
-        <button class="btn primary lock-submit" id="lockReload" type="button">${icon('radar', 16)}<span>重新加载</span></button>
+        <button class="btn primary lock-submit" id="lockReload" type="button">${icon('radar', 16)}<span>${t('lock.action.reload')}</span></button>
       </div>
-      <div class="lock-hint">${icon('shield', 14)}<span>在解锁完成前，飞鸽不会加载配置、聊天记录，也不会启动网络广播。</span></div>
+      <div class="lock-hint">${icon('shield', 14)}<span>${t('lock.hint.locked')}</span></div>
     </div>`;
   root.querySelector('#lockReload')?.addEventListener('click', () => location.reload());
 }

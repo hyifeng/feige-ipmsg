@@ -9,6 +9,7 @@ const {
   readJsonSync,
   writeProtectedJsonSync,
 } = require('../security/local-crypto');
+const { t } = require('../i18n');
 
 /**
  * 保存首次 SAS 验证通过后生成的高熵 pairing key。
@@ -32,7 +33,11 @@ class SecurePairingStore {
       raw = readJsonSync(this.file);
       if (raw == null) return;
       if (isEnvelope(raw)) {
-        if (!this.key) throw new Error('加密配对数据已锁定，请先输入本地密码');
+        if (!this.key) {
+          const error = new Error(t('main.error.pairingLocked'));
+          error.code = 'LOCAL_LOCKED';
+          throw error;
+        }
         raw = decryptJson(this.key, raw, AAD.PAIRINGS);
       } else {
         legacy = true;
@@ -42,12 +47,12 @@ class SecurePairingStore {
         if (!record || typeof record.data !== 'string') continue;
         this.records.set(peerKey, {
           data: record.data,
-          user: String(record.user || '未知联系人'),
+          user: String(record.user || t('main.contact.unknown')),
           updatedAt: Number(record.updatedAt) || 0,
         });
       }
     } catch (error) {
-      if (error && (error.code === 'LOCAL_DECRYPT_FAILED' || /已加密|本地密码|锁定/.test(error.message))) {
+      if (error && (error.code === 'LOCAL_LOCKED' || error.code === 'LOCAL_DECRYPT_FAILED')) {
         throw error;
       }
       /* 首次运行或文件损坏 */
@@ -70,11 +75,11 @@ class SecurePairingStore {
 
   set(peerKey, value) {
     if (!value || !Buffer.isBuffer(value.key) || value.key.length !== 32) {
-      throw new Error('无效的加密配对密钥');
+      throw new Error(t('main.error.invalidPairingKey'));
     }
     this.records.set(peerKey, {
       data: value.key.toString('base64'),
-      user: String(value.user || '未知联系人').slice(0, 64),
+      user: String(value.user || t('main.contact.unknown')).slice(0, 64),
       updatedAt: Date.now(),
     });
     this._save();

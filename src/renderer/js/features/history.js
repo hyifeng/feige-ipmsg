@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.js';
 import { avatarStyle, dayLabel, escapeHtml, formatTime, initials, relativeTime } from '../core/format.js';
 import { displayFor } from '../core/contacts.js';
 import { icon } from '../core/icons.js';
@@ -6,27 +7,35 @@ import { dom, state } from '../core/state.js';
 import { closeModal } from './modals.js';
 import { activePeer, renderChat, renderPeers, selectPeer } from './peers.js';
 
+function previewText(value) {
+  return String(value || '')
+    .replace(/^\[图片\]/, `[${t('common.image')}]`)
+    .replace(/^\[文件夹\]/, `[${t('common.folder')}]`)
+    .replace(/^\[文件\]/, `[${t('common.file')}]`)
+    .replace(/^\[消息\]/, `[${t('common.message')}]`);
+}
+
 function openHistoryModal() {
   if (!window.feige) return;
   dom.modalRoot.innerHTML = `
     <div class="modal-backdrop" data-modal-backdrop>
-      <div class="modal history-modal" role="dialog" aria-modal="true" aria-label="聊天记录">
+      <div class="modal history-modal" role="dialog" aria-modal="true" aria-label="${t('history.title')}">
         <div class="modal-head">
           <div>
-            <h3>聊天记录</h3>
-            <p>本地密码加密保存 · 仅当前设备可见</p>
+            <h3>${t('history.title')}</h3>
+            <p>${t('history.subtitle')}</p>
           </div>
-          <button class="modal-close" data-close-modal title="关闭">${icon('x', 17)}</button>
+          <button class="modal-close" data-close-modal title="${t('common.close')}">${icon('x', 17)}</button>
         </div>
         <div class="history-search">
           <span class="ico">${icon('search', 17)}</span>
-          <input id="historySearchInput" type="text" placeholder="搜索聊天内容或文件名…" autocomplete="off" spellcheck="false" />
+          <input id="historySearchInput" type="text" placeholder="${t('history.searchPlaceholder')}" autocomplete="off" spellcheck="false" />
         </div>
         <div class="history-results" id="historyResults"></div>
         <div class="modal-actions history-actions">
-          <button class="btn danger history-clear" id="historyClearBtn">清空全部记录</button>
-          <span class="history-hint" id="historyHint">记录已由本地密码加密保存</span>
-          <button class="btn ghost" data-close-modal>关闭</button>
+          <button class="btn danger history-clear" id="historyClearBtn">${t('history.clearAction')}</button>
+          <span class="history-hint" id="historyHint">${t('history.encryptedHint')}</span>
+          <button class="btn ghost" data-close-modal>${t('common.close')}</button>
         </div>
       </div>
     </div>`;
@@ -43,8 +52,8 @@ function openHistoryModal() {
   const contactRow = (peer) => {
     const display = displayFor(peer.key, peer.user);
     const sub = display.verified
-      ? (peer.lastText || '聊天记录')
-      : `${display.fingerprint} · 未认证${peer.lastText ? ` · ${peer.lastText}` : ''}`;
+      ? previewText(peer.lastText) || t('history.title')
+      : `${display.fingerprint} · ${t('common.status.unverified')}${peer.lastText ? ` · ${previewText(peer.lastText)}` : ''}`;
     return `
     <button class="history-row" data-history-peer="${escapeHtml(peer.key)}">
       <span class="avatar avatar-sm ${display.unnamed ? 'unnamed-avatar' : ''}" style="${display.unnamed ? '' : avatarStyle(display.label)}">${escapeHtml(display.unnamed ? '?' : initials(display.label))}</span>
@@ -60,10 +69,10 @@ function openHistoryModal() {
     const claimed = (message.peer && message.peer.user) || message.peerName || '';
     const display = displayFor(message.peerKey, claimed);
     const peerName = display.label;
-    const prefix = message.direction === 'out' ? '我：' : '';
+    const prefix = message.direction === 'out' ? t('history.mePrefix') : '';
     const text = message.kind === 'files'
-      ? (message.text || `[${message.isFolder ? '文件夹' : '文件'}] ${message.rootName || '文件'}`)
-      : (message.text || '[消息]');
+      ? (previewText(message.text) || `[${t(message.isFolder ? 'common.folder' : 'common.file')}] ${message.rootName || t('common.file')}`)
+      : (previewText(message.text) || `[${t('common.message')}]`);
     return `
       <button class="history-result" data-history-peer="${escapeHtml(message.peerKey)}">
         <span class="history-result-head">
@@ -80,14 +89,14 @@ function openHistoryModal() {
       results.innerHTML = `
         <div class="history-empty">
           <span class="ico">${icon('clock', 22)}</span>
-          <b>还没有聊天记录</b>
-          <small>发送或接收消息后，会自动保存在本机</small>
+          <b>${t('history.emptyTitle')}</b>
+          <small>${t('history.emptyHint')}</small>
         </div>`;
-      hint.textContent = '记录已由本地密码加密保存';
+      hint.textContent = t('history.encryptedHint');
       return;
     }
-    results.innerHTML = `<div class="history-section">最近聊天 · ${peers.length}</div>${peers.map(contactRow).join('')}`;
-    hint.textContent = `共 ${peers.length} 位联系人 · 记录已由本地密码加密保存`;
+    results.innerHTML = `<div class="history-section">${t('history.recentTitle', { count: peers.length })}</div>${peers.map(contactRow).join('')}`;
+    hint.textContent = t('history.contactsSummary', { count: peers.length });
   };
 
   const runSearch = async () => {
@@ -103,17 +112,17 @@ function openHistoryModal() {
         results.innerHTML = `
           <div class="history-empty">
             <span class="ico">${icon('search', 22)}</span>
-            <b>没有找到相关记录</b>
-            <small>换个关键词试试，或搜索文件名</small>
+            <b>${t('history.searchEmptyTitle')}</b>
+            <small>${t('history.searchEmptyHint')}</small>
           </div>`;
-        hint.textContent = '没有匹配结果';
+        hint.textContent = t('history.searchNoMatches');
         return;
       }
-      results.innerHTML = `<div class="history-section">搜索结果 · ${items.length}</div>${items.map(messageRow).join('')}`;
-      hint.textContent = `共 ${items.length} 条匹配记录`;
+      results.innerHTML = `<div class="history-section">${t('history.searchTitle', { count: items.length })}</div>${items.map(messageRow).join('')}`;
+      hint.textContent = t('history.searchSummary', { count: items.length });
     } catch (error) {
       if (results.isConnected) {
-        results.innerHTML = `<div class="history-empty"><b>搜索失败</b><small>${escapeHtml(error.message || String(error))}</small></div>`;
+        results.innerHTML = `<div class="history-empty"><b>${t('history.searchFailed')}</b><small>${escapeHtml(error.message || String(error))}</small></div>`;
       }
     }
   };
@@ -134,20 +143,20 @@ function openHistoryModal() {
   clearBtn.addEventListener('click', async () => {
     if (!clearArmed) {
       clearArmed = true;
-      clearBtn.textContent = '再次点击确认清空';
+      clearBtn.textContent = t('history.clearConfirm');
       clearBtn.classList.add('armed');
-      hint.textContent = '此操作会永久删除本机全部聊天记录';
+      hint.textContent = t('history.clearWarning');
       clearTimer = setTimeout(() => {
         clearArmed = false;
-        clearBtn.textContent = '清空全部记录';
+        clearBtn.textContent = t('history.clearAction');
         clearBtn.classList.remove('armed');
-        hint.textContent = '记录已由本地密码加密保存';
+        hint.textContent = t('history.encryptedHint');
       }, 4000);
       return;
     }
     clearTimeout(clearTimer);
     clearBtn.disabled = true;
-    clearBtn.textContent = '正在清空…';
+    clearBtn.textContent = t('history.clearing');
     try {
       await window.feige.clearHistory();
       state.historyEpoch += 1;
@@ -162,11 +171,11 @@ function openHistoryModal() {
       renderPeers();
       renderChat();
       closeModal();
-      toast('聊天记录已清空', 'success');
+      toast(t('history.cleared'), 'success');
     } catch (error) {
       clearBtn.disabled = false;
-      clearBtn.textContent = '清空全部记录';
-      toast(error.message || '清空失败', 'error');
+      clearBtn.textContent = t('history.clearAction');
+      toast(error.message || t('history.clearFailed'), 'error');
     }
   });
 

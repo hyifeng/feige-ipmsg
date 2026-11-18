@@ -1,5 +1,7 @@
 'use strict';
 
+const { t } = require('../../i18n');
+
 const { EventEmitter } = require('node:events');
 
 /**
@@ -110,7 +112,7 @@ class CompositeTransport extends EventEmitter {
 
   connectStream(peerKey, purpose, meta) {
     const transport = this._transportFor(peerKey);
-    if (!transport) throw new Error('对方不在线');
+    if (!transport) throw new Error(t('main.error.peerOffline'));
     return transport.connectStream(peerKey, purpose, meta);
   }
 

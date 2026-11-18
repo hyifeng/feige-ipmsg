@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.js';
 import { autoGrow, pickAndSend, sendCurrentText, sendPathsToActive, toggleTheme } from './composer.js';
 import { toast } from '../core/notifications.js';
 import { icon } from '../core/icons.js';
@@ -8,6 +9,7 @@ import { chooseImageForActive, handleImagePaste, openImageLightbox, openImageMen
 import { addSystemMessage, appendMessage, appendMessageToDom, findMessageById, loadOlderMessages, markOfferMessage, refreshMessageNode, renderMessages, updateMessageMetaDom } from './messages.js';
 import { closeModal } from './modals.js';
 import { displayName } from '../core/contacts.js';
+import { secureReasonText } from '../core/secure-reasons.js';
 import { activePeer, applyTheme, clearActiveUnread, peerByKey, renderAll, renderChatHead, renderPeers, renderSelf, selectPeer } from './peers.js';
 import { onSecureButton, onSecureWarningButton, openSecureModal, showSecureInfo, startSecure } from './secure.js';
 import { openSettings } from './settings.js';
@@ -139,11 +141,11 @@ function handleEvent(event) {
       renderPeers();
       renderTransfers();
       if (state.settings.autoAccept) {
-        toast(`已自动接收来自 ${displayName(payload.peerKey, payload.peerName)} 的文件`, 'success');
+        toast(t('event.transfer.autoReceived', { name: displayName(payload.peerKey, payload.peerName) }), 'success');
       } else if (state.active !== payload.peerKey || !document.hasFocus()) {
         // 不抢占当前界面，只在消息列表和系统通知中提示，由用户主动接收。
-        toast(`收到 ${displayName(payload.peerKey, payload.peerName)} 的文件传输请求`, 'info', {
-          label: '查看',
+        toast(t('event.transfer.requestFrom', { name: displayName(payload.peerKey, payload.peerName) }), 'info', {
+          label: t('common.view'),
           onClick: () => selectPeer(payload.peerKey),
         });
       }
@@ -164,7 +166,7 @@ function handleEvent(event) {
       if (offer && payload.reason === 'declined') {
         // 本地主动拒绝时由按钮反馈，这里只处理对方取消
       } else if (payload?.reason === 'canceled') {
-        toast('对方取消了传输请求', 'info');
+        toast(t('transfer.requestCanceledByPeer'), 'info');
       }
       break;
     }
@@ -196,39 +198,39 @@ function handleEvent(event) {
       if (!payload) break;
       if (!payload.image) {
         if (payload.direction === 'in') {
-          toast(`已接收 ${payload.fileCount || 0} 个文件`, 'success', payload.root ? {
-            label: '打开文件夹',
+          toast(t('event.transfer.receivedCount', { count: payload.fileCount || 0 }), 'success', payload.root ? {
+            label: t('common.openFolder'),
             onClick: () => window.feige.openPath(payload.root),
           } : null);
         } else {
-          toast(`已发送给 ${payload.peerName || '对方'}`, 'success');
+          toast(t('event.transfer.sentTo', { name: payload.peerName || t('common.peer') }), 'success');
         }
       }
       renderTransfers();
       break;
     }
     case 'transfer-error': {
-      toast(payload?.message || '传输失败', 'error');
+      toast(payload?.message || t('transfer.failed'), 'error');
       renderTransferBadge();
       if (state.panelOpen) renderTransfers();
       break;
     }
     case 'transfer-closed': {
       if (payload?.direction === 'out') {
-        toast(payload.reason === 'declined' ? '对方拒绝了传输' : '传输已取消', payload.reason === 'declined' ? 'warn' : 'info');
+        toast(t(payload.reason === 'declined' ? 'event.transfer.peerDeclined' : 'common.transferCanceled'), payload.reason === 'declined' ? 'warn' : 'info');
       }
       renderTransfers();
       break;
     }
     case 'fatal': {
-      state.fatal = payload?.message || '网络启动失败';
+      state.fatal = payload?.message || t('event.fatal.networkStart');
       state.self.ready = false;
       renderSelf();
-      toast(state.fatal, 'error', { label: '打开设置', onClick: openSettings });
+      toast(state.fatal, 'error', { label: t('common.openSettings'), onClick: openSettings });
       break;
     }
     case 'error': {
-      toast(payload?.message || '发生错误', 'error');
+      toast(payload?.message || t('event.error.generic'), 'error');
       break;
     }
     case 'image-update': {
@@ -269,7 +271,8 @@ function handleEvent(event) {
           kind: 'system',
           action: 'open-secure',
           secureSessionId: payload.sessionId,
-          text: '对方请求认证身份。点击「打开认证」核对 6 位码。',
+          i18nKey: 'event.secure.requestSystem',
+          text: t('event.secure.requestSystem'),
           at: Date.now(),
         };
         const added = appendMessage(payload.peerKey, prompt);
@@ -288,7 +291,7 @@ function handleEvent(event) {
         if (!state.secureQueue.some((item) => item.sessionId === payload.sessionId)) {
           state.secureQueue.push(payload);
         }
-        toast('收到认证请求，请先处理当前弹窗', 'info');
+        toast(t('event.secure.requestBusy'), 'info');
       } else {
         openSecureModal(payload);
       }
@@ -299,7 +302,7 @@ function handleEvent(event) {
       state.modal.peerConfirmed = true;
       const status = dom.modalRoot.querySelector('#secureModalStatus');
       if (status) {
-        status.textContent = state.modal.localConfirmed ? '双方已确认，正在完成认证…' : '对方已确认，请核对后确认';
+        status.textContent = t(state.modal.localConfirmed ? 'secure.status.bothConfirmed' : 'event.secure.peerConfirmed');
         status.classList.remove('warn');
       }
       break;
@@ -307,7 +310,7 @@ function handleEvent(event) {
     case 'secure-up': {
       if (!payload?.peerKey) break;
       const peerKey = payload.peerKey;
-      const peerName = payload.peerName || (peerByKey(peerKey) && peerByKey(peerKey).user) || '对方';
+      const peerName = payload.peerName || (peerByKey(peerKey) && peerByKey(peerKey).user) || t('common.peer');
       state.securePeers.set(peerKey, payload);
       if (!payload.temporary) state.securePairings.add(peerKey);
       state.securePending.delete(peerKey);
@@ -321,12 +324,14 @@ function handleEvent(event) {
         closeModal();
       }
       if (payload.temporary) {
-        addSystemMessage(peerKey, '⚠ 身份未认证：消息会自动加密，可核对 6 位码完成认证');
-        toast(`已与 ${peerName} 建立会话，身份尚未认证`, 'info');
+        addSystemMessage(peerKey, 'event.secure.temporarySystem');
+        toast(t('event.secure.sessionUnverified', { name: peerName }), 'info');
       } else {
-        addSystemMessage(peerKey, `🛡 ${payload.mode === 'resume' ? '已恢复身份认证' : '已完成身份认证'}`);
+        addSystemMessage(peerKey, payload.mode === 'resume'
+          ? 'event.secure.identityRestoredSystem'
+          : 'event.secure.identitySavedSystem');
         toast(
-          payload.mode === 'resume' ? `已恢复与 ${peerName} 的身份认证` : `已与 ${peerName} 完成身份认证`,
+          t(payload.mode === 'resume' ? 'event.secure.identityRestoredWith' : 'event.secure.identityVerifiedWith', { name: peerName }),
           'success',
         );
       }
@@ -349,7 +354,7 @@ function handleEvent(event) {
         state.modal.settled = true;
         closeModal();
       }
-      const reason = String(payload.reason || '会话已断开');
+      const reason = String(payload.reason || t('secure.reason.sessionClosed'));
       const peerRevoked = reason === '对方已解除认证';
       const selfOffline = reason === '用户下线' || reason === '节点停止';
       const localCancel = reason === '用户取消';
@@ -363,23 +368,23 @@ function handleEvent(event) {
       } else if (peerRevoked) {
         state.secureWarnings.set(peerKey, {
           kind: 'revoked',
-          title: '对方已解除认证',
-          text: '对方已解除本机认证。你可以重新认证，也可以只解除本机保存的旧认证。',
-          actionLabel: '处理认证',
+          title: t('secure.reason.peerRevoked'),
+          text: t('event.secure.peerRevoked.text'),
+          actionLabel: t('event.secure.resolveAction'),
           canReset: true,
         });
         state.securePaused.delete(peerKey);
-        addSystemMessage(peerKey, '🔓 对方已解除本机认证，请重新认证');
+        addSystemMessage(peerKey, 'event.secure.peerRevoked.system');
       } else if (payload.pairingRemoved) {
         state.securePaused.delete(peerKey);
         const warning = {
           kind: 'key',
-          title: '身份认证失败',
-          text: '认证密钥校验失败，会话已断开；请重新认证身份',
-          actionLabel: '重新认证',
+          title: t('event.secure.failedTitle'),
+          text: t('event.secure.keyCheckFailed'),
+          actionLabel: t('secure.action.reverify'),
         };
         state.secureWarnings.set(peerKey, warning);
-        addSystemMessage(peerKey, `⚠ ${warning.text}`);
+        addSystemMessage(peerKey, 'event.secure.warningText', { text: warning.text });
         toast(warning.text, 'error');
       } else if (offline) {
         // 对方离线不是认证失败：暂停会话，等待自动恢复；对方丢失配对时会停止重试。
@@ -391,25 +396,25 @@ function handleEvent(event) {
           });
         }
       } else if (payload.auto && !wasActive) {
-        const text = `自动恢复身份认证失败：${reason}`;
+        const text = t('event.secure.autoRestoreFailedWithReason', { reason });
         if (!state.secureWarnings.has(peerKey)) {
           state.secureWarnings.set(peerKey, {
             kind: 'resume',
-            title: '自动恢复身份认证失败',
+            title: t('event.secure.autoRestoreFailed'),
             text,
-            actionLabel: '重新认证',
+            actionLabel: t('secure.action.reverify'),
             canReset: true,
           });
         }
-        addSystemMessage(peerKey, `⚠ ${text}`);
+        addSystemMessage(peerKey, 'event.secure.warningText', { text });
         toast(text, 'warn');
       } else if (wasActive) {
         state.secureWarnings.delete(peerKey);
         state.securePaused.set(peerKey, { kind: 'interrupted', reason });
       } else if (peerCancel) {
-        toast('对方取消了身份认证', 'info');
+        toast(t('event.secure.peerCanceled'), 'info');
       } else if (!localCancel) {
-        toast(reason, 'info');
+        toast(secureReasonText(reason), 'info');
       }
       renderPeers();
       const downPeer = peerByKey(peerKey);
@@ -439,9 +444,9 @@ function handleEvent(event) {
         state.modal.settled = true;
         closeModal();
       }
-      const peerName = payload.peerName || (peerByKey(peerKey) && peerByKey(peerKey).user) || '对方';
-      addSystemMessage(peerKey, '🛡 已完成身份认证，认证关系已保存');
-      toast(`已与 ${peerName} 完成身份认证`, 'success');
+      const peerName = payload.peerName || (peerByKey(peerKey) && peerByKey(peerKey).user) || t('common.peer');
+      addSystemMessage(peerKey, 'event.secure.identitySavedSystem');
+      toast(t('event.secure.identityVerifiedWith', { name: peerName }), 'success');
       renderPeers();
       const authPeer = peerByKey(peerKey);
       if (authPeer && state.active === peerKey) renderChatHead(authPeer);
@@ -454,23 +459,23 @@ function handleEvent(event) {
       if (info.peerKey && ['no-pairing', 'auth-failed', 'pairing-exists'].includes(code)) {
         const defaults = {
           'no-pairing': {
-            title: '无法恢复身份认证',
-            text: '本机保存了配对，但对端没有；请选择重新认证。',
+            title: t('event.secure.restoreUnavailableTitle'),
+            text: t('event.secure.noPairingHelp'),
           },
           'auth-failed': {
-            title: '身份认证失败',
-            text: '双方配对密钥可能不一致；如双方都提示失败，请双方都在本机选择重新认证。',
+            title: t('event.secure.failedTitle'),
+            text: t('event.secure.pairingMismatchHelp'),
           },
           'pairing-exists': {
-            title: '对方请求重新认证',
-            text: '本机仍保存旧认证。点击「重新认证」会先解除本机旧认证，再重新建立。',
+            title: t('event.secure.reverifyRequestedTitle'),
+            text: t('event.secure.pairingExistsHelp'),
           },
         };
         const revoked = code === 'no-pairing';
         const fallback = revoked
           ? {
-            title: '对方已解除认证',
-            text: '对方已解除本机认证。你可以重新认证，也可以只解除本机保存的旧认证。',
+            title: t('secure.reason.peerRevoked'),
+            text: t('event.secure.peerRevoked.text'),
           }
           : defaults[code];
         const text = revoked ? fallback.text : (info.message || fallback.text);
@@ -480,22 +485,22 @@ function handleEvent(event) {
         const duplicate = !!previous && previous.kind === kind && previous.text === text;
         state.secureWarnings.set(info.peerKey, {
           kind,
-          title: code === 'pairing-exists' && !canReset ? '等待对方重新认证' : fallback.title,
+          title: code === 'pairing-exists' && !canReset ? t('event.secure.waitingReverify') : fallback.title,
           text,
-          actionLabel: canReset ? '处理认证' : '',
+          actionLabel: canReset ? t('event.secure.resolveAction') : '',
           canReset,
         });
         if (revoked) state.securePaused.delete(info.peerKey);
         if (!duplicate) {
-          addSystemMessage(info.peerKey, revoked ? '🔓 对方已解除本机认证，请重新认证' : `⚠ ${text}`);
+          addSystemMessage(info.peerKey, revoked ? 'event.secure.peerRevoked.system' : 'event.secure.warningText', { text });
           if (!revoked) toast(text, 'error');
         }
         renderPeers();
         const warningPeer = peerByKey(info.peerKey);
         if (warningPeer && state.active === info.peerKey) renderChatHead(warningPeer);
       } else {
-        toast(info.message || '身份认证警告', 'warn');
-        if (info.peerKey) addSystemMessage(info.peerKey, `⚠ ${info.message || '身份认证警告'}`);
+        toast(info.message || t('event.secure.warning'), 'warn');
+        if (info.peerKey) addSystemMessage(info.peerKey, 'event.secure.warningText', { text: info.message || t('event.secure.warning') });
       }
       break;
     }
@@ -522,7 +527,7 @@ function openPeerMenu(event) {
   closePeerMenu();
   const menu = document.createElement('div');
   menu.className = 'image-menu peer-menu';
-  menu.innerHTML = `<button type="button" data-peer-refresh>${icon('refresh', 15)}<span>刷新列表</span></button>`;
+  menu.innerHTML = `<button type="button" data-peer-refresh>${icon('refresh', 15)}<span>${t('event.peerMenu.refresh')}</span></button>`;
   document.body.appendChild(menu);
   const width = menu.offsetWidth;
   const height = menu.offsetHeight;
@@ -553,9 +558,9 @@ function openPeerMenu(event) {
     closePeerMenu();
     try {
       await window.feige.refreshDiscovery();
-      toast('已广播刷新', 'success');
+      toast(t('event.peerMenu.refreshed'), 'success');
     } catch (error) {
-      toast(error.message || '刷新失败', 'error');
+      toast(error.message || t('event.peerMenu.refreshFailed'), 'error');
     }
   });
 }
@@ -566,7 +571,7 @@ async function acceptOfferFromList(offerId, button = null) {
   const original = button ? button.innerHTML : '';
   if (button) {
     button.disabled = true;
-    button.textContent = '接收中…';
+    button.textContent = t('event.offer.receiving');
   }
   try {
     const snapshot = await window.feige.acceptOffer(offer.id);
@@ -579,7 +584,7 @@ async function acceptOfferFromList(offerId, button = null) {
       button.disabled = false;
       button.innerHTML = original;
     }
-    toast(error.message || '接收失败', 'error');
+    toast(error.message || t('transfer.receiveFailed'), 'error');
   }
 }
 
@@ -655,7 +660,7 @@ function bindStaticEvents() {
       const sessionId = securePrompt.dataset.openSecure;
       const info = state.securePrompts.get(sessionId);
       if (!info) {
-        toast('认证请求已失效', 'warn');
+        toast(t('event.verificationRequestExpired'), 'warn');
         return;
       }
       openSecureModal(info);
@@ -696,7 +701,7 @@ function bindStaticEvents() {
         renderMessages(false);
         renderTransfers();
       } catch (error) {
-        toast(error.message || '操作失败', 'error');
+        toast(error.message || t('event.error.operationFailed'), 'error');
       }
       return;
     }
@@ -716,7 +721,7 @@ function bindStaticEvents() {
       try {
         await window.feige.cancelTransfer(button.dataset.id);
       } catch (error) {
-        toast(error.message || '取消失败', 'error');
+        toast(error.message || t('event.error.cancelFailed'), 'error');
       }
     } else if (action === 'offer') {
       await acceptOfferFromList(button.dataset.id, button);
@@ -729,7 +734,7 @@ function bindStaticEvents() {
         renderTransfers();
         if (state.active) renderMessages(false);
       } catch (error) {
-        toast(error.message || '操作失败', 'error');
+        toast(error.message || t('event.error.operationFailed'), 'error');
       }
     }
   });
@@ -762,7 +767,7 @@ function bindStaticEvents() {
     if (!peer || !peer.online) return;
     state.sidebarDragDepth += 1;
     dom.dropOverlay.classList.remove('is-hidden');
-    dom.dropText.textContent = `文件将发送给 ${peer.user}`;
+    dom.dropText.textContent = t('event.drop.target', { name: peer.user });
   });
   window.addEventListener('dragover', (event) => {
     event.preventDefault();
@@ -779,13 +784,13 @@ function bindStaticEvents() {
     dom.dropOverlay.classList.add('is-hidden');
     const peer = peerByKey(state.active);
     if (!peer || !peer.online) {
-      toast('请先选择一位在线同事', 'warn');
+      toast(t('common.selectOnlinePeer'), 'warn');
       return;
     }
     const files = [...(event.dataTransfer?.files || [])];
     const paths = files.map((file) => window.feige.pathForFile(file)).filter(Boolean);
     if (!paths.length) {
-      toast('没有读取到文件路径，请尝试使用“发送文件夹”按钮', 'warn');
+      toast(t('event.drop.noPaths'), 'warn');
       return;
     }
     await sendPathsToActive(paths);

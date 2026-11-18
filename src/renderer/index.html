@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'none';" />
-  <title>飞鸽 · 局域网快传</title>
+  <title data-i18n="app.title">飞鸽 · 局域网快传</title>
   <link rel="stylesheet" href="styles/base.css" />
   <link rel="stylesheet" href="styles/sidebar.css" />
   <link rel="stylesheet" href="styles/chat.css" />
@@ -27,9 +27,9 @@
           <path d="M12 14v2" />
         </svg>
       </div>
-      <div class="lock-brand">飞鸽 <span>LOCAL VAULT</span></div>
+      <div class="lock-brand"><span class="lock-brand-name" data-i18n="app.name">飞鸽</span> <span>LOCAL VAULT</span></div>
       <div class="lock-spinner" aria-hidden="true"></div>
-      <p class="lock-loading-text">正在检查本地资料…</p>
+      <p class="lock-loading-text" data-i18n="app.lockChecking">正在检查本地资料…</p>
     </div>
   </div>
   <div class="app" id="app">
@@ -50,24 +50,24 @@
           </svg>
         </div>
         <div class="brand-text">
-          <div class="brand-name">飞鸽</div>
+          <div class="brand-name" data-i18n="app.name">飞鸽</div>
           <div class="brand-sub">LAN&nbsp;·&nbsp;TRANSFER</div>
         </div>
-        <div class="brand-pulse" id="brandPulse" title="在线"></div>
+        <div class="brand-pulse" id="brandPulse" title="在线" data-i18n-title="common.status.online"></div>
       </header>
 
-      <button class="self-card" id="selfCard" title="打开设置">
+      <button class="self-card" id="selfCard" title="打开设置" data-i18n-title="common.openSettings">
         <span class="avatar avatar-lg" id="selfAvatar">飞</span>
         <span class="self-info">
-          <span class="self-name" id="selfName">飞鸽用户</span>
-          <span class="self-meta" id="selfMeta">正在启动…</span>
+          <span class="self-name" id="selfName" data-i18n="app.defaultUserName">飞鸽用户</span>
+          <span class="self-meta" id="selfMeta" data-i18n="app.starting">正在启动…</span>
         </span>
         <span class="self-edit ico" data-icon="settings" data-size="16"></span>
       </button>
 
       <div class="search-wrap">
         <span class="search-ico ico" data-icon="search" data-size="17"></span>
-        <input id="peerSearch" type="text" placeholder="搜索别名 / 指纹 / IP" autocomplete="off" spellcheck="false" />
+        <input id="peerSearch" type="text" placeholder="搜索别名 / 指纹 / IP" data-i18n-placeholder="app.searchPlaceholder" autocomplete="off" spellcheck="false" />
         <kbd class="search-kbd">/</kbd>
       </div>
 
@@ -76,14 +76,14 @@
       <footer class="sidebar-footer">
         <button class="transfer-toggle" id="transferToggle">
           <span class="ico" data-icon="inbox" data-size="18"></span>
-          <span>传输中心</span>
+          <span data-i18n="transfer.center">传输中心</span>
           <span class="badge is-hidden" id="transferBadge">0</span>
           <span class="chev ico" data-icon="chevron-right" data-size="15"></span>
         </button>
         <div class="footer-actions">
-          <button class="icon-btn" id="historyBtn" title="聊天记录"><span class="ico" data-icon="clock" data-size="18"></span></button>
-          <button class="icon-btn" id="themeBtn" title="切换主题"><span class="ico" data-icon="moon" data-size="18"></span></button>
-          <button class="icon-btn" id="settingsBtn" title="设置"><span class="ico" data-icon="settings" data-size="18"></span></button>
+          <button class="icon-btn" id="historyBtn" title="聊天记录" data-i18n-title="history.title"><span class="ico" data-icon="clock" data-size="18"></span></button>
+          <button class="icon-btn" id="themeBtn" title="切换主题" data-i18n-title="app.themeToggle"><span class="ico" data-icon="moon" data-size="18"></span></button>
+          <button class="icon-btn" id="settingsBtn" title="设置" data-i18n-title="settings.title"><span class="ico" data-icon="settings" data-size="18"></span></button>
         </div>
       </footer>
     </aside>
@@ -115,26 +115,26 @@
           <circle cx="209" cy="126" r="2" fill="#a5b4fc" opacity=".75" />
           <circle cx="224" cy="62" r="1.5" fill="#38bdf8" opacity=".85" />
         </svg>
-        <h1>让文件，<span class="grad">飞</span>过去</h1>
-        <p class="welcome-sub">同一局域网自动发现 · 无需服务器 · 消息与文件夹极速直达</p>
+        <h1><span data-i18n="app.welcome.titlePrefix">让文件，</span><span class="grad" data-i18n="app.welcome.titleAccent">飞</span><span data-i18n="app.welcome.titleSuffix">过去</span></h1>
+        <p class="welcome-sub" data-i18n="app.welcome.subtitle">同一局域网自动发现 · 无需服务器 · 消息与文件夹极速直达</p>
         <div class="feature-row">
           <div class="feature">
             <span class="feature-ico"><span class="ico" data-icon="radar" data-size="19"></span></span>
-            <b>自动发现</b>
-            <small>启动即见同事</small>
+            <b data-i18n="app.welcome.featureDiscover.title">自动发现</b>
+            <small data-i18n="app.welcome.featureDiscover.text">启动即见同事</small>
           </div>
           <div class="feature">
             <span class="feature-ico"><span class="ico" data-icon="zap" data-size="19"></span></span>
-            <b>极速直传</b>
-            <small>局域网满速</small>
+            <b data-i18n="app.welcome.featureTransfer.title">极速直传</b>
+            <small data-i18n="app.welcome.featureTransfer.text">局域网满速</small>
           </div>
           <div class="feature">
             <span class="feature-ico"><span class="ico" data-icon="folder" data-size="19"></span></span>
-            <b>整夹发送</b>
-            <small>目录结构保留</small>
+            <b data-i18n="app.welcome.featureFolders.title">整夹发送</b>
+            <small data-i18n="app.welcome.featureFolders.text">目录结构保留</small>
           </div>
         </div>
-        <div class="welcome-hint"><span class="pulse-dot"></span><span id="welcomeHint">正在寻找同一网段的设备…</span></div>
+        <div class="welcome-hint"><span class="pulse-dot"></span><span id="welcomeHint" data-i18n="app.welcome.searching">正在寻找同一网段的设备…</span></div>
       </section>
 
       <section class="chat is-hidden" id="chat">
@@ -143,16 +143,16 @@
           <div class="chat-peer">
             <div class="chat-name-row">
               <h2 id="chatName">—</h2>
-              <span class="pill" id="chatStatus">在线</span>
+              <span class="pill" id="chatStatus" data-i18n="common.status.online">在线</span>
             </div>
             <div class="chat-meta" id="chatMeta">—</div>
           </div>
           <div class="chat-actions">
-            <button class="action-btn alias-action is-hidden" id="chatAliasBtn" title="设置本地别名"><span class="ico" data-icon="edit" data-size="17"></span><span>命名</span></button>
-            <button class="action-btn secure-action" id="secureBtn" title="核对 6 位码认证身份"><span class="ico" data-icon="shield" data-size="17"></span><span id="secureBtnLabel">认证身份</span></button>
-            <button class="action-btn" id="sendFileBtn"><span class="ico" data-icon="paperclip" data-size="17"></span><span>发送文件</span></button>
-            <button class="action-btn" id="sendFolderBtn"><span class="ico" data-icon="folder-plus" data-size="17"></span><span>发送文件夹</span></button>
-            <button class="icon-btn" id="chatTransferBtn" title="传输中心"><span class="ico" data-icon="inbox" data-size="19"></span></button>
+            <button class="action-btn alias-action is-hidden" id="chatAliasBtn" title="设置本地别名" data-i18n-title="alias.action.set"><span class="ico" data-icon="edit" data-size="17"></span><span data-i18n="alias.action.name">命名</span></button>
+            <button class="action-btn secure-action" id="secureBtn" title="核对 6 位码认证身份" data-i18n-title="secure.action.verifyTitle"><span class="ico" data-icon="shield" data-size="17"></span><span id="secureBtnLabel">认证身份</span></button>
+            <button class="action-btn" id="sendFileBtn"><span class="ico" data-icon="paperclip" data-size="17"></span><span data-i18n="common.sendFile">发送文件</span></button>
+            <button class="action-btn" id="sendFolderBtn"><span class="ico" data-icon="folder-plus" data-size="17"></span><span data-i18n="common.sendFolder">发送文件夹</span></button>
+            <button class="icon-btn" id="chatTransferBtn" title="传输中心" data-i18n-title="transfer.center"><span class="ico" data-icon="inbox" data-size="19"></span></button>
           </div>
         </header>
 
@@ -169,14 +169,14 @@
 
         <div class="composer-wrap">
           <div class="composer" id="composer">
-            <button class="attach-btn" id="attachImageBtn" title="发送图片"><span class="ico" data-icon="image" data-size="19"></span></button>
-            <button class="attach-btn" id="attachFileBtn" title="发送文件"><span class="ico" data-icon="paperclip" data-size="19"></span></button>
-            <button class="attach-btn" id="attachFolderBtn" title="发送文件夹"><span class="ico" data-icon="folder-plus" data-size="19"></span></button>
-            <textarea id="messageInput" rows="1" placeholder="写点什么…  Enter 发送，Shift + Enter 换行"></textarea>
-            <button class="send-btn" id="sendBtn" title="发送"><span class="ico" data-icon="send" data-size="19"></span></button>
+            <button class="attach-btn" id="attachImageBtn" title="发送图片" data-i18n-title="image.send"><span class="ico" data-icon="image" data-size="19"></span></button>
+            <button class="attach-btn" id="attachFileBtn" title="发送文件" data-i18n-title="common.sendFile"><span class="ico" data-icon="paperclip" data-size="19"></span></button>
+            <button class="attach-btn" id="attachFolderBtn" title="发送文件夹" data-i18n-title="common.sendFolder"><span class="ico" data-icon="folder-plus" data-size="19"></span></button>
+            <textarea id="messageInput" rows="1" placeholder="写点什么…  Enter 发送，Shift + Enter 换行" data-i18n-placeholder="chat.composer.placeholder"></textarea>
+            <button class="send-btn" id="sendBtn" title="发送" data-i18n-title="common.send"><span class="ico" data-icon="send" data-size="19"></span></button>
           </div>
           <div class="composer-hint">
-            <span id="composerHint">Enter 发送 · Shift + Enter 换行 · 可直接拖入文件</span>
+            <span id="composerHint" data-i18n="chat.composer.hint">Enter 发送 · Shift + Enter 换行 · 可直接拖入文件</span>
             <span class="mono" id="peerAddress"></span>
           </div>
         </div>
@@ -187,10 +187,10 @@
     <aside class="transfer-panel" id="transferPanel">
       <header class="panel-head">
         <div>
-          <h2>传输中心</h2>
-          <p id="transferSummary">暂无传输</p>
+          <h2 data-i18n="transfer.center">传输中心</h2>
+          <p id="transferSummary" data-i18n="transfer.summaryEmpty">暂无传输</p>
         </div>
-        <button class="icon-btn" id="closeTransfers" title="关闭"><span class="ico" data-icon="x" data-size="18"></span></button>
+        <button class="icon-btn" id="closeTransfers" title="关闭" data-i18n-title="common.close"><span class="ico" data-icon="x" data-size="18"></span></button>
       </header>
       <div class="panel-body" id="transferList"></div>
     </aside>
@@ -198,8 +198,8 @@
     <div class="drop-overlay is-hidden" id="dropOverlay">
       <div class="drop-card">
         <span class="drop-ico ico" data-icon="upload" data-size="34"></span>
-        <b>松开发送</b>
-        <span id="dropText">文件将直接发送给对方</span>
+        <b data-i18n="app.dropRelease">松开发送</b>
+        <span id="dropText" data-i18n="app.dropHint">文件将直接发送给对方</span>
       </div>
     </div>
 

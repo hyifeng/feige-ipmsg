@@ -1,5 +1,7 @@
 'use strict';
 
+const { t } = require('../i18n');
+
 const path = require('node:path');
 
 function fileStateFromTransfer(transfer) {
@@ -76,13 +78,13 @@ function persistMessage(ctx, message) {
   ctx.history.append({
     ...message,
     kind,
-    peerName: message.peerName || (peer && peer.user) || '未知联系人',
+    peerName: message.peerName || (peer && peer.user) || t('main.contact.unknown'),
     status: kind === 'text' && message.direction === 'out' ? (message.status || 'sent') : undefined,
   }, peer).catch((error) => console.error('[feige] 保存聊天记录失败', error));
 }
 
 async function sendPathsWithHistory(ctx, peerKey, paths, caption = '') {
-  if (!ctx.node) throw new Error('网络尚未就绪');
+  if (!ctx.node) throw new Error(t('main.error.networkNotReady'));
   const snapshot = await ctx.node.sendPaths(peerKey, paths, caption);
   if (snapshot && ctx.history) {
     const peer = ctx.node.peers.get(peerKey) || null;

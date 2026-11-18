@@ -2,7 +2,8 @@
 
 const fs = require('node:fs');
 const { Menu, Notification, Tray, nativeImage } = require('electron');
-const { APP_NAME, ICON_PATH } = require('./config');
+const { ICON_PATH } = require('./config');
+const { t } = require('../i18n');
 
 function showMainWindow(ctx) {
   const { win } = ctx;
@@ -24,6 +25,24 @@ function notify(ctx, title, body) {
   }
 }
 
+function trayMenu(ctx) {
+  return Menu.buildFromTemplate([
+    { label: t('main.tray.show'), click: () => showMainWindow(ctx) },
+    { type: 'separator' },
+    { label: t('main.tray.quit'), click: () => ctx.app.quit() },
+  ]);
+}
+
+function refreshShellLanguage(ctx) {
+  if (ctx.win && !ctx.win.isDestroyed()) {
+    ctx.win.setTitle(t('main.app.title'));
+  }
+  if (ctx.tray) {
+    ctx.tray.setToolTip(t('main.app.title'));
+    ctx.tray.setContextMenu(trayMenu(ctx));
+  }
+}
+
 function createTray(ctx) {
   if (ctx.tray) return;
   try {
@@ -33,12 +52,8 @@ function createTray(ctx) {
     if (image.isEmpty()) return;
     const tray = new Tray(image);
     ctx.tray = tray;
-    tray.setToolTip(`${APP_NAME} · 局域网快传`);
-    tray.setContextMenu(Menu.buildFromTemplate([
-      { label: '显示主界面', click: () => showMainWindow(ctx) },
-      { type: 'separator' },
-      { label: '退出飞鸽', click: () => ctx.app.quit() },
-    ]));
+    tray.setToolTip(t('main.app.title'));
+    tray.setContextMenu(trayMenu(ctx));
     tray.on('click', () => showMainWindow(ctx));
     tray.on('double-click', () => showMainWindow(ctx));
   } catch (error) {
@@ -53,4 +68,4 @@ function destroyTray(ctx) {
   ctx.tray = null;
 }
 
-module.exports = { showMainWindow, notify, createTray, destroyTray };
+module.exports = { showMainWindow, notify, createTray, destroyTray, refreshShellLanguage };

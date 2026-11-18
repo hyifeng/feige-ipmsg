@@ -1,6 +1,7 @@
 'use strict';
 
 const { ipcMain } = require('electron');
+const { t } = require('../../i18n');
 const { decorateContact, contactInfo } = require('../info');
 const { isIdentity, identityOfPeerKey } = require('../../../shared/protocol/identity');
 
@@ -15,7 +16,7 @@ function registerHistoryIpc(ctx) {
   ipcMain.handle('feige:history-load', async (_event, payload = {}) => {
     if (!ctx.history) return { messages: [], hasMore: false };
     const peerKey = String(payload.peerKey || '');
-    if (!peerKey) throw new Error('缺少联系人');
+    if (!peerKey) throw new Error(t('main.error.missingContact'));
     return ctx.history.loadMessages(peerKey, {
       limit: payload.limit,
       before: payload.before == null ? null : Number(payload.before),

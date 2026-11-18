@@ -1,5 +1,7 @@
 'use strict';
 
+const { t } = require('../i18n');
+
 const { IncomingNode } = require('./node-incoming');
 const { APP_TAG, PROTOCOL_VERSION } = require('../../shared/protocol');
 const { now } = require('./utils');
@@ -17,7 +19,7 @@ class SecureNode extends IncomingNode {
         this.emit('message', {
           id: String(payload.id),
           peerKey,
-          peerName: peer.user || '未知联系人',
+          peerName: peer.user || t('main.contact.unknown'),
           text: payload.text,
           at: payload.at,
           direction: 'in',
@@ -87,7 +89,7 @@ class SecureNode extends IncomingNode {
         if (waiter) {
           this.secureManifestWaiters.delete(id);
           clearTimeout(waiter.timer);
-          waiter.reject(new Error(payload.message || '获取加密文件清单失败'));
+          waiter.reject(new Error(payload.message || t('main.network.error.manifestFetchFailed')));
         }
         break;
       }

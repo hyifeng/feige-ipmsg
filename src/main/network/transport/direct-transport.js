@@ -1,5 +1,7 @@
 'use strict';
 
+const { t } = require('../../i18n');
+
 const crypto = require('node:crypto');
 const { EventEmitter } = require('node:events');
 
@@ -43,7 +45,7 @@ class DirectTransport extends EventEmitter {
           this.emit('peer', {
             source: 'direct',
             key: peerKey,
-            user: peer.user || '未知联系人',
+            user: peer.user || t('main.contact.unknown'),
             host: peer.host || '',
             online: true,
           });
@@ -106,11 +108,11 @@ class DirectTransport extends EventEmitter {
   }
 
   connectStream(peerKey, purpose, meta = {}) {
-    if (!this.online) throw new Error('已下线');
+    if (!this.online) throw new Error(t('main.network.error.offline'));
     const peer = this.getPeer(peerKey);
-    if (!peer || !peer.online) throw new Error('对方不在线');
+    if (!peer || !peer.online) throw new Error(t('main.error.peerOffline'));
     const record = this._ensureConnection(peerKey);
-    if (!record) throw new Error('无法建立直连');
+    if (!record) throw new Error(t('main.network.error.directFailed'));
     const id = crypto.randomBytes(6).toString('hex');
     const channel = record.pc.createDataChannel(`feige:stream:${purpose}:${id}`, { ordered: true });
     const stream = new DataChannelStream(channel, { peerKey, purpose });
@@ -194,7 +196,7 @@ class DirectTransport extends EventEmitter {
         this.emit('peer', {
           source: 'direct',
           key: peerKey,
-          user: peer.user || '未知联系人',
+          user: peer.user || t('main.contact.unknown'),
           host: peer.host || '',
           online: true,
         });
@@ -286,7 +288,7 @@ class DirectTransport extends EventEmitter {
       const offer = await record.pc.createOffer();
       await record.pc.setLocalDescription(offer);
       const local = record.pc.localDescription;
-      if (!local || !local.sdp) throw new Error('创建 offer 失败');
+      if (!local || !local.sdp) throw new Error(t('main.network.error.offerCreateFailed'));
       this._signal(record.peerKey, { kind: 'offer', sdp: local.sdp });
     } catch (error) {
       this.emit('warn', error);
@@ -344,7 +346,7 @@ class DirectTransport extends EventEmitter {
       const answer = await record.pc.createAnswer();
       await record.pc.setLocalDescription(answer);
       const local = record.pc.localDescription;
-      if (!local || !local.sdp) throw new Error('创建 answer 失败');
+      if (!local || !local.sdp) throw new Error(t('main.network.error.answerCreateFailed'));
       this._signal(peerKey, { kind: 'answer', sdp: local.sdp });
       if (!record.control) {
         // 等待发起方的控制通道；若没有，DataChannel 仍可用于业务流。

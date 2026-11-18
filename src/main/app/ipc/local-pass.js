@@ -5,6 +5,7 @@ const { ipcMain } = require('electron');
 const { validatePass } = require('../../security/local-pass');
 const { activateRuntime } = require('../bootstrap');
 const { buildStateSnapshot } = require('../snapshot');
+const { t } = require('../../i18n');
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -88,17 +89,17 @@ function registerLocalPassIpc(ctx) {
           } catch (error) {
             console.error('[feige] 免密自动解锁失败', error);
             ctx.autoUnlock.clear();
-            autoUnlockError = '免密自动解锁失败，请输入本地密码';
+            autoUnlockError = t('main.localPass.autoUnlockFailed');
           }
         } else {
           ctx.autoUnlock.clear();
-          autoUnlockError = '免密令牌已失效，请输入本地密码';
+          autoUnlockError = t('main.localPass.tokenExpired');
         }
       } else if (loaded.reason === 'invalid') {
         ctx.autoUnlock.clear();
-        autoUnlockError = loaded.message || '免密令牌已损坏，请输入本地密码';
+        autoUnlockError = loaded.message || t('main.localPass.tokenDamaged');
       } else if (loaded.reason === 'failed') {
-        autoUnlockError = loaded.message || '系统钥匙串无法解密免密令牌，请输入本地密码';
+        autoUnlockError = loaded.message || t('main.localPass.tokenDecryptFailed');
       }
     }
 
@@ -115,10 +116,10 @@ function registerLocalPassIpc(ctx) {
   });
 
   ipcMain.handle('feige:local-pass-setup', async (_event, payload) => {
-    if (ctx.demo) return { ok: false, code: 'demo', message: '演示模式不需要本地密码' };
+    if (ctx.demo) return { ok: false, code: 'demo', message: t('main.localPass.demo') };
     if (ctx.unlocked) return { ok: true, snapshot: await buildStateSnapshot(ctx) };
     if (ctx.localPass.isConfigured()) {
-      return { ok: false, code: 'already-configured', message: '本地密码已设置，请输入本地密码解锁' };
+      return { ok: false, code: 'already-configured', message: t('main.localPass.alreadyConfigured') };
     }
 
     const { pass, remember } = passPayload(payload);
@@ -129,7 +130,7 @@ function registerLocalPassIpc(ctx) {
       ctx.localPass.setup(pass);
       ctx.autoUnlock.clear();
     } catch (error) {
-      return { ok: false, code: 'setup-failed', message: error.message || '无法设置本地密码' };
+      return { ok: false, code: 'setup-failed', message: error.message || t('main.localPass.setupFailed') };
     }
 
     try {
@@ -139,7 +140,7 @@ function registerLocalPassIpc(ctx) {
       return {
         ok: false,
         code: 'activate-failed',
-        message: '无法初始化加密资料，请检查本地数据是否损坏',
+        message: t('main.localPass.activateFailed'),
       };
     }
 
@@ -148,10 +149,10 @@ function registerLocalPassIpc(ctx) {
   });
 
   ipcMain.handle('feige:local-pass-unlock', async (_event, payload) => {
-    if (ctx.demo) return { ok: false, code: 'demo', message: '演示模式不需要本地密码' };
+    if (ctx.demo) return { ok: false, code: 'demo', message: t('main.localPass.demo') };
     if (ctx.unlocked) return { ok: true, snapshot: await buildStateSnapshot(ctx) };
     if (!ctx.localPass.isConfigured()) {
-      return { ok: false, code: 'not-configured', message: '尚未设置本地密码' };
+      return { ok: false, code: 'not-configured', message: t('main.localPass.notConfigured') };
     }
 
     const { pass, remember } = passPayload(payload);
@@ -162,7 +163,7 @@ function registerLocalPassIpc(ctx) {
       return {
         ok: false,
         code: 'corrupted',
-        message: error.message || '本地密码配置已损坏，无法解锁',
+        message: error.message || t('main.localPass.corrupted'),
       };
     }
 
@@ -171,7 +172,7 @@ function registerLocalPassIpc(ctx) {
       return {
         ok: false,
         code: 'wrong-password',
-        message: '本地密码错误，无法解密本机资料',
+        message: t('main.localPass.wrongPassword'),
       };
     }
 
@@ -182,7 +183,7 @@ function registerLocalPassIpc(ctx) {
       return {
         ok: false,
         code: 'decrypt-failed',
-        message: '本地资料无法解密，数据可能已损坏',
+        message: t('main.localPass.decryptFailed'),
       };
     }
 
@@ -197,7 +198,7 @@ function registerLocalPassIpc(ctx) {
 
   ipcMain.handle('feige:set-auto-unlock', async (_event, enabled) => {
     if (!ctx.unlocked || !ctx.localKey) {
-      return { ok: false, code: 'locked', message: '请先解锁本地资料' };
+      return { ok: false, code: 'locked', message: t('main.localPass.locked') };
     }
 
     if (enabled) {
@@ -214,7 +215,7 @@ function registerLocalPassIpc(ctx) {
 
   ipcMain.handle('feige:local-pass-change', async (_event, payload = {}) => {
     if (!ctx.unlocked || !ctx.localKey) {
-      return { ok: false, code: 'locked', message: '请先解锁本地资料' };
+      return { ok: false, code: 'locked', message: t('main.localPass.locked') };
     }
 
     const oldPass = typeof payload.oldPass === 'string' ? payload.oldPass : '';
@@ -226,17 +227,17 @@ function registerLocalPassIpc(ctx) {
     try {
       changed = ctx.localPass.changePass(oldPass, newPass);
     } catch (error) {
-      return { ok: false, code: 'change-failed', message: error.message || '无法修改本地密码' };
+      return { ok: false, code: 'change-failed', message: error.message || t('main.localPass.changeFailed') };
     }
 
     if (!changed) {
       await sleep(450);
-      return { ok: false, code: 'wrong-password', message: '原密码错误' };
+      return { ok: false, code: 'wrong-password', message: t('main.localPass.oldPasswordWrong') };
     }
 
     // 修改密码后默认取消下次免密，要求用户用新密码重新确认一次。
     ctx.autoUnlock.disable();
-    return { ok: true, autoUnlockEnabled: false, message: '本地密码已修改' };
+    return { ok: true, autoUnlockEnabled: false, message: t('main.localPass.changed') };
   });
 }
 

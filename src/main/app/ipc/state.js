@@ -2,6 +2,7 @@
 
 const { ipcMain, dialog } = require('electron');
 const { saveSettings, sanitizePatch } = require('../settings');
+const { t } = require('../../i18n');
 const { selfInfo, emit, friendlyNetworkError } = require('../info');
 const { buildStateSnapshot } = require('../snapshot');
 
@@ -49,15 +50,15 @@ function registerStateIpc(ctx) {
   });
 
   ipcMain.handle('feige:refresh-discovery', () => {
-    if (!ctx.node) throw new Error('网络尚未就绪');
+    if (!ctx.node) throw new Error(t('main.error.networkNotReady'));
     ctx.node.refresh();
     return true;
   });
 
   ipcMain.handle('feige:choose-dir', async (_event, defaultPath) => {
     const result = await dialog.showOpenDialog(ctx.win, {
-      title: '选择保存位置',
-      buttonLabel: '选择文件夹',
+      title: t('main.dialog.chooseSaveLocation'),
+      buttonLabel: t('main.dialog.chooseFolder'),
       defaultPath: typeof defaultPath === 'string' && defaultPath ? defaultPath : ctx.settings.downloadDir,
       properties: ['openDirectory', 'createDirectory'],
     });

@@ -12,6 +12,7 @@ const {
   readJson,
   writeJsonAtomic,
 } = require('../security/local-crypto');
+const { t } = require('../i18n');
 
 const INDEX_VERSION = 1;
 const DEFAULT_LIMIT = 100;
@@ -103,7 +104,7 @@ class HistoryStore {
 
   patch(peerKey, messageId, patch) {
     if (!peerKey || !messageId || !patch || typeof patch !== 'object') {
-      return Promise.reject(new Error('无效的历史补丁'));
+      return Promise.reject(new Error(t('main.error.invalidHistoryPatch')));
     }
     return this._enqueue(async () => {
       const record = { t: 'patch', id: String(messageId), patch, at: Date.now() };
@@ -249,7 +250,7 @@ class HistoryStore {
     if (!contact) {
       contact = {
         key: message.peerKey,
-        user: message.peerName || '未知联系人',
+        user: message.peerName || t('main.contact.unknown'),
         host: '',
         ip: '',
         port: 0,
@@ -306,7 +307,11 @@ class HistoryStore {
         continue;
       }
       if (isEnvelope(event)) {
-        if (!this.key) throw new Error('聊天记录已加密，请先输入本地密码');
+        if (!this.key) {
+        const error = new Error(t('main.error.historyLocked'));
+        error.code = 'LOCAL_LOCKED';
+        throw error;
+      }
         event = decryptJson(this.key, event, AAD.HISTORY);
       }
       if (event.t === 'msg' && event.id) {
@@ -348,7 +353,11 @@ class HistoryStore {
 
     let data = raw;
     if (isEnvelope(raw)) {
-      if (!this.key) throw new Error('聊天记录索引已加密，请先输入本地密码');
+      if (!this.key) {
+        const error = new Error(t('main.error.historyIndexLocked'));
+        error.code = 'LOCAL_LOCKED';
+        throw error;
+      }
       data = decryptJson(this.key, raw, AAD.HISTORY_INDEX);
     }
     if (!data || data.v !== INDEX_VERSION || !Array.isArray(data.peers)) return;
@@ -357,7 +366,7 @@ class HistoryStore {
       if (!peer || !peer.key) continue;
       this.peers.set(peer.key, {
         key: String(peer.key),
-        user: String(peer.user || '未知联系人'),
+        user: String(peer.user || t('main.contact.unknown')),
         host: String(peer.host || ''),
         ip: String(peer.ip || ''),
         port: Number(peer.port) || 0,
@@ -409,7 +418,7 @@ class HistoryStore {
       const info = last.peerInfo || first.peerInfo || {};
       this.peers.set(first.peerKey, {
         key: first.peerKey,
-        user: info.user || last.peerName || first.peerName || '未知联系人',
+        user: info.user || last.peerName || first.peerName || t('main.contact.unknown'),
         host: info.host || '',
         ip: info.ip || '',
         port: Number(info.port) || 0,

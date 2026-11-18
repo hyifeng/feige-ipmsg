@@ -3,6 +3,7 @@
 const path = require('node:path');
 
 const { isIdentity, identityOfPeerKey, peerKeyOf, shortIdentity } = require('../../shared/protocol/identity');
+const { t } = require('../i18n');
 const {
   AAD,
   isEnvelope,
@@ -46,7 +47,11 @@ class ContactsStore {
       raw = readJsonSync(this.file);
       if (raw == null) return;
       if (isEnvelope(raw)) {
-        if (!this.key) throw new Error('联系人簿已加密，请先输入本地密码');
+        if (!this.key) {
+          const error = new Error(t('main.error.contactsLocked'));
+          error.code = 'LOCAL_LOCKED';
+          throw error;
+        }
         raw = decryptJson(this.key, raw, AAD.CONTACTS);
       } else {
         legacy = true;
@@ -64,7 +69,7 @@ class ContactsStore {
         });
       }
     } catch (error) {
-      if (error && (error.code === 'LOCAL_DECRYPT_FAILED' || /已加密|本地密码/.test(error.message))) {
+      if (error && (error.code === 'LOCAL_LOCKED' || error.code === 'LOCAL_DECRYPT_FAILED')) {
         throw error;
       }
       /* 首次运行或文件损坏 */
@@ -94,7 +99,7 @@ class ContactsStore {
   }
 
   setAlias(identity, value) {
-    if (!isIdentity(identity)) throw new Error('无效的身份公钥');
+    if (!isIdentity(identity)) throw new Error(t('main.error.invalidIdentityKey'));
     const alias = cleanAlias(value);
     if (!alias) return this.remove(identity);
     this.entries.set(identity, { alias, updatedAt: Date.now() });
@@ -128,7 +133,7 @@ class ContactsStore {
       peerKey: peerKeyOf(identity),
       alias,
       unnamed: !(alias || claimedName),
-      label: alias || claimedName || '未认证设备',
+      label: alias || claimedName || t('main.contact.unverifiedDevice'),
       fingerprint: shortIdentity(identity),
       claimed: claimedName,
     };

@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.js';
 import { toast } from '../core/notifications.js';
 import { dom, state } from '../core/state.js';
 import { addSentFileMessage } from './messages.js';
@@ -6,14 +7,14 @@ import { renderTransfers } from './transfers.js';
 
 async function sendCurrentText() {
   if (!state.self.online) {
-    toast('已下线，上线后才能发送消息', 'warn');
+    toast(t('composer.offline.sendMessages'), 'warn');
     return;
   }
   const text = dom.messageInput.value.trim();
   if (!text || !state.active) return;
   const peer = peerByKey(state.active);
   if (!peer || !peer.online) {
-    toast('对方已离线，无法发送', 'warn');
+    toast(t('composer.peerIsOfflineCannotSend'), 'warn');
     return;
   }
   dom.messageInput.value = '';
@@ -21,7 +22,7 @@ async function sendCurrentText() {
   try {
     await window.feige.sendText(state.active, text);
   } catch (error) {
-    toast(error.message || '发送失败', 'error');
+    toast(error.message || t('chat.sendFailed'), 'error');
     dom.messageInput.value = text;
     autoGrow();
   }
@@ -29,12 +30,12 @@ async function sendCurrentText() {
 
 async function pickAndSend(kind) {
   if (!state.self.online) {
-    toast('已下线，上线后才能发送文件', 'warn');
+    toast(t('composer.offline.sendFiles'), 'warn');
     return;
   }
   const peer = peerByKey(state.active);
   if (!peer || !peer.online) {
-    toast('对方不在线', 'warn');
+    toast(t('composer.peerIsOffline'), 'warn');
     return;
   }
   try {
@@ -42,24 +43,24 @@ async function pickAndSend(kind) {
     if (!snapshot) return;
     addSentFileMessage(peer.key, snapshot);
     renderTransfers();
-    toast('已发出传输请求，等待对方接收', 'success');
+    toast(t('composer.transferRequestSent'), 'success');
   } catch (error) {
-    toast(error.message || '发送失败', 'error');
+    toast(error.message || t('chat.sendFailed'), 'error');
   }
 }
 
 async function sendPathsToActive(paths) {
   if (!state.self.online) {
-    toast('已下线，上线后才能发送文件', 'warn');
+    toast(t('composer.offline.sendFiles'), 'warn');
     return;
   }
   const peer = peerByKey(state.active);
   if (!peer || !peer.online) {
-    toast('请先选择一位在线同事', 'warn');
+    toast(t('common.selectOnlinePeer'), 'warn');
     return;
   }
   if (!paths || !paths.length) {
-    toast('没有可发送的文件', 'warn');
+    toast(t('common.noFilesToSend'), 'warn');
     return;
   }
   try {
@@ -67,9 +68,9 @@ async function sendPathsToActive(paths) {
     if (!snapshot) return;
     addSentFileMessage(peer.key, snapshot);
     renderTransfers();
-    toast('已发出传输请求，等待对方接收', 'success');
+    toast(t('composer.transferRequestSent'), 'success');
   } catch (error) {
-    toast(error.message || '发送失败', 'error');
+    toast(error.message || t('chat.sendFailed'), 'error');
   }
 }
 

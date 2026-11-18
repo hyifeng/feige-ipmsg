@@ -1,5 +1,7 @@
 'use strict';
 
+const { t } = require('../../i18n');
+
 const { Duplex } = require('node:stream');
 
 const CHUNK_BYTES = 64 * 1024;
@@ -44,7 +46,7 @@ class DataChannelStream extends Duplex {
     if (channel.readyState === 'open') setImmediate(() => this._markOpen());
     else {
       this.connectTimer = setTimeout(() => {
-        if (!this.connected && !this.channelClosed) this.destroy(new Error('直连通道建立超时'));
+        if (!this.connected && !this.channelClosed) this.destroy(new Error(t('main.network.error.directChannelTimeout')));
       }, 45000);
     }
   }
@@ -77,7 +79,7 @@ class DataChannelStream extends Duplex {
 
   _write(chunk, _encoding, callback) {
     if (this.channelClosed) {
-      callback(new Error('加密连接已关闭'));
+      callback(new Error(t('main.network.error.encryptedConnectionClosed')));
       return;
     }
     this.queue.push({ buffer: Buffer.from(chunk), callback });
@@ -159,7 +161,7 @@ class DataChannelStream extends Duplex {
     this.connectTimer = null;
     const finalCallback = this.finalCallback;
     this.finalCallback = null;
-    if (finalCallback) finalCallback(error || new Error('连接已关闭'));
+    if (finalCallback) finalCallback(error || new Error(t('main.network.error.connectionClosed')));
     for (const subscription of this.subscriptions) {
       try {
         subscription.unSubscribe();

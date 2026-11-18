@@ -3,6 +3,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
+const { t } = require('../i18n');
 const { readJsonSync, writeJsonAtomicSync } = require('./local-crypto');
 
 const FILE_NAME = 'auto-unlock.json';
@@ -47,11 +48,11 @@ class AutoUnlockStore {
   }
 
   unavailableReason() {
-    if (!this.safeStorage) return '当前环境不支持系统钥匙串';
+    if (!this.safeStorage) return t('main.autoUnlock.unsupported');
     if (!this.isBackendSecure()) {
-      return `当前桌面使用的 ${this.backendName()} 后端不是安全的系统钥匙串`;
+      return t('main.autoUnlock.insecureBackend', { backend: this.backendName() });
     }
-    return '系统钥匙串当前不可用';
+    return t('main.autoUnlock.unavailable');
   }
 
   async isAvailable() {
@@ -97,7 +98,7 @@ class AutoUnlockStore {
 
   async save(key) {
     if (!Buffer.isBuffer(key) || key.length !== KEY_BYTES) {
-      return { ok: false, reason: 'invalid-key', message: '无效的本地数据密钥' };
+      return { ok: false, reason: 'invalid-key', message: t('main.localPass.invalidKey') };
     }
     if (!(await this.isAvailable())) {
       return { ok: false, reason: 'unavailable', message: this.unavailableReason() };
@@ -108,10 +109,10 @@ class AutoUnlockStore {
       encrypted = await this.safeStorage.encryptStringAsync(key.toString('base64'));
     } catch (error) {
       console.error('[feige] 系统钥匙串加密免密令牌失败', error);
-      return { ok: false, reason: 'encrypt-failed', message: '无法使用系统钥匙串保存免密令牌' };
+      return { ok: false, reason: 'encrypt-failed', message: t('main.autoUnlock.saveFailed') };
     }
     if (!Buffer.isBuffer(encrypted) || !encrypted.length) {
-      return { ok: false, reason: 'encrypt-failed', message: '系统钥匙串返回了无效数据' };
+      return { ok: false, reason: 'encrypt-failed', message: t('main.autoUnlock.invalidData') };
     }
 
     try {
@@ -123,7 +124,7 @@ class AutoUnlockStore {
       }, 0o600);
     } catch (error) {
       console.error('[feige] 保存免密令牌失败', error);
-      return { ok: false, reason: 'write-failed', message: '无法保存免密令牌' };
+      return { ok: false, reason: 'write-failed', message: t('main.autoUnlock.writeFailed') };
     }
     try {
       this.setPreference(true);
@@ -135,7 +136,7 @@ class AutoUnlockStore {
   }
 
   async load() {
-    if (!this.hasToken()) return { ok: false, reason: 'missing', message: '未启用免密登录' };
+    if (!this.hasToken()) return { ok: false, reason: 'missing', message: t('main.autoUnlock.notEnabled') };
     if (!(await this.isAvailable())) {
       return { ok: false, reason: 'unavailable', message: this.unavailableReason() };
     }
@@ -144,10 +145,10 @@ class AutoUnlockStore {
     try {
       raw = readJsonSync(this.file);
     } catch {
-      return { ok: false, reason: 'invalid', message: '免密令牌已损坏' };
+      return { ok: false, reason: 'invalid', message: t('main.autoUnlock.tokenDamaged') };
     }
     if (!raw || raw.v !== VERSION || typeof raw.data !== 'string') {
-      return { ok: false, reason: 'invalid', message: '免密令牌格式无效' };
+      return { ok: false, reason: 'invalid', message: t('main.autoUnlock.invalidFormat') };
     }
 
     let text;
@@ -156,21 +157,21 @@ class AutoUnlockStore {
       text = typeof result === 'string' ? result : (result && result.result);
     } catch (error) {
       console.error('[feige] 系统钥匙串解密免密令牌失败', error);
-      return { ok: false, reason: 'failed', message: '系统钥匙串无法解密免密令牌' };
+      return { ok: false, reason: 'failed', message: t('main.autoUnlock.decryptFailed') };
     }
     if (typeof text !== 'string') {
-      return { ok: false, reason: 'failed', message: '系统钥匙串返回了无效数据' };
+      return { ok: false, reason: 'failed', message: t('main.autoUnlock.invalidData') };
     }
 
     let key;
     try {
       key = Buffer.from(text, 'base64');
     } catch {
-      return { ok: false, reason: 'invalid', message: '免密令牌内容无效' };
+      return { ok: false, reason: 'invalid', message: t('main.autoUnlock.invalidContent') };
     }
     if (key.length !== KEY_BYTES) {
       key.fill(0);
-      return { ok: false, reason: 'invalid', message: '免密令牌内容无效' };
+      return { ok: false, reason: 'invalid', message: t('main.autoUnlock.invalidContent') };
     }
     return { ok: true, key, backend: raw.backend || '' };
   }

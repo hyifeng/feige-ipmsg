@@ -1,5 +1,7 @@
 'use strict';
 
+const { t } = require('../i18n');
+
 const { now } = require('./utils');
 
 const DEFAULT_SOURCE_TIMEOUTS = Object.freeze({
@@ -36,7 +38,7 @@ class PeerRegistry {
         key,
         ip: data.ip || '',
         port: Number(data.port) || 0,
-        user: data.user || '未知联系人',
+        user: data.user || t('main.contact.unknown'),
         host: data.host || '',
         online: false,
         firstSeen: now(),

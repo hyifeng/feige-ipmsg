@@ -1,3 +1,4 @@
+import { getLocale, setLocale, t } from '../i18n/index.js';
 import { escapeHtml } from '../core/format.js';
 import { icon } from '../core/icons.js';
 import { toast } from '../core/notifications.js';
@@ -19,81 +20,88 @@ async function openSettings() {
   }
   const settings = state.settings;
   const autoUnlockHint = security.autoUnlockAvailable
-    ? '使用系统钥匙串记住本地数据密钥；关闭后下次启动需要输入本地密码'
-    : (security.autoUnlockMessage || '当前系统钥匙串不可用，无法启用免密登录');
+    ? t('settings.rememberTheLocalDataKeyInThe')
+    : (security.autoUnlockMessage || t('password.autoUnlock.unavailable'));
   dom.modalRoot.innerHTML = `
     <div class="modal-backdrop" data-modal-backdrop>
-      <div class="modal" role="dialog" aria-modal="true" aria-label="设置">
+      <div class="modal" role="dialog" aria-modal="true" aria-label="${t('settings.title')}">
         <div class="modal-head">
           <div>
-            <h3>设置</h3>
-            <p>配置身份、网络、本地密码与文件接收方式</p>
+            <h3>${t('settings.title')}</h3>
+            <p>${t('settings.description')}</p>
           </div>
-          <button class="modal-close" data-close-modal title="关闭">${icon('x', 17)}</button>
+          <button class="modal-close" data-close-modal title="${t('common.close')}">${icon('x', 17)}</button>
         </div>
         <div class="settings-grid">
           <label class="field">
-            <span>我的昵称</span>
+            <span>${t('settings.nickname')}</span>
             <input class="input" id="setNickname" maxlength="32" value="${escapeHtml(settings.nickname)}" />
+          </label>
+          <label class="field">
+            <span>${t('settings.language')}</span>
+            <select class="input" id="setLanguage">
+              <option value="zh-CN" ${getLocale() === 'zh-CN' ? 'selected' : ''}>中文</option>
+              <option value="en" ${getLocale() === 'en' ? 'selected' : ''}>English</option>
+            </select>
           </label>
           <label class="switch-row">
             <div>
-              <b>启用局域网发现</b>
-              <small>关闭后只通过 Hub 发现同事，本机不再监听局域网 UDP/TCP</small>
+              <b>${t('settings.lanEnabled')}</b>
+              <small>${t('settings.lanEnabledHint')}</small>
             </div>
             <span class="switch"><input type="checkbox" id="setLanEnabled" ${settings.lanEnabled !== false ? 'checked' : ''} /><i></i></span>
           </label>
           <div class="switch-row">
             <div class="hub-copy">
-              <b>通过公网服务器发现同事</b>
-              <small>服务器只扩散飞鸽广播帧、转发 P2P 信令；消息、图片和文件仍走直连</small>
+              <b>${t('settings.hub.enabled')}</b>
+              <small>${t('settings.hub.enabledHint')}</small>
               <span class="hub-inline" id="hubInline" ${settings.hubEnabled ? '' : 'hidden'}>
                 <small class="hub-detail" id="hubDetail"></small>
-                <button class="hub-edit" type="button" data-hub-action="edit">更改</button>
+                <button class="hub-edit" type="button" data-hub-action="edit">${t('common.change')}</button>
               </span>
             </div>
             <span class="switch"><input type="checkbox" id="setHubEnabled" ${settings.hubEnabled ? 'checked' : ''} /><i></i></span>
           </div>
           <label class="switch-row">
             <div>
-              <b>下次免密进入</b>
+              <b>${t('settings.autoUnlock.label')}</b>
               <small>${escapeHtml(autoUnlockHint)}</small>
             </div>
             <span class="switch"><input type="checkbox" id="setAutoUnlock" ${security.autoUnlockEnabled ? 'checked' : ''} ${security.autoUnlockAvailable || security.autoUnlockEnabled ? '' : 'disabled'} /><i></i></span>
           </label>
           <div class="field">
-            <span>本地密码</span>
+            <span>${t('password.localPassword')}</span>
             <div class="dir-row">
-              <button class="mini-action" id="changePassBtn" type="button">修改本地密码</button>
+              <button class="mini-action" id="changePassBtn" type="button">${t('password.title.change')}</button>
             </div>
-            <small>修改密码只会重新包裹本地数据密钥，不会重新加密聊天记录；下次启动需使用新密码。</small>
+            <small>${t('settings.passwordNote')}</small>
           </div>
           <div class="field">
-            <span>接收文件保存到</span>
+            <span>${t('settings.downloadDir')}</span>
             <div class="dir-row">
               <input class="input" id="setDownloadDir" readonly value="${escapeHtml(settings.downloadDir)}" />
-              <button class="mini-action" id="browseDir">更改</button>
+              <button class="mini-action" id="browseDir">${t('common.change')}</button>
             </div>
           </div>
           <label class="switch-row">
             <div>
-              <b>自动接收文件</b>
-              <small>收到文件后直接保存到接收目录，不再逐个询问</small>
+              <b>${t('settings.autoAccept')}</b>
+              <small>${t('settings.autoAcceptHint')}</small>
             </div>
             <span class="switch"><input type="checkbox" id="setAutoAccept" ${settings.autoAccept ? 'checked' : ''} /><i></i></span>
           </label>
           <label class="switch-row">
             <div>
-              <b>消息提示音</b>
-              <small>收到新消息或文件请求时播放提示音</small>
+              <b>${t('settings.sound')}</b>
+              <small>${t('settings.soundHint')}</small>
             </div>
             <span class="switch"><input type="checkbox" id="setSound" ${settings.sound !== false ? 'checked' : ''} /><i></i></span>
           </label>
         </div>
         <div class="modal-actions">
-          <span class="settings-about">飞鸽 v${escapeHtml(state.version)} · 身份 ${escapeHtml(state.self.fingerprint || '—')} · UDP / TCP</span>
-          <button class="btn ghost" data-close-modal>取消</button>
-          <button class="btn primary" id="saveSettings">保存设置</button>
+          <span class="settings-about">${t('settings.about', { version: escapeHtml(state.version), fingerprint: escapeHtml(state.self.fingerprint || '—') })}</span>
+          <button class="btn ghost" data-close-modal>${t('common.cancel')}</button>
+          <button class="btn primary" id="saveSettings">${t('settings.save')}</button>
         </div>
       </div>
     </div>`;
@@ -107,13 +115,30 @@ async function openSettings() {
   const autoUnlockInput = dom.modalRoot.querySelector('#setAutoUnlock');
   const lanEnabledInput = dom.modalRoot.querySelector('#setLanEnabled');
   const hubEnabledInput = dom.modalRoot.querySelector('#setHubEnabled');
+  const languageSelect = dom.modalRoot.querySelector('#setLanguage');
+
+  languageSelect?.addEventListener('change', async () => {
+    const previous = getLocale();
+    const requested = languageSelect.value;
+    languageSelect.disabled = true;
+    try {
+      const saved = await window.feige.setLanguage(requested);
+      setLocale(saved);
+      openSettings();
+    } catch (error) {
+      setLocale(previous);
+      languageSelect.value = previous;
+      languageSelect.disabled = false;
+      toast(error.message || t('settings.languageUpdateFailed'), 'error');
+    }
+  });
 
   dom.modalRoot.querySelector('#browseDir').addEventListener('click', async () => {
     try {
       const chosen = await window.feige.chooseDir(dirInput.value);
       if (chosen) dirInput.value = chosen;
     } catch (error) {
-      toast(error.message || '无法选择目录', 'error');
+      toast(error.message || t('common.selectFolderFailed'), 'error');
     }
   });
 
@@ -124,13 +149,13 @@ async function openSettings() {
       const result = await window.feige.setAutoUnlock(enabled);
       if (!result || !result.ok) {
         autoUnlockInput.checked = !enabled;
-        toast((result && result.message) || '无法更新免密设置', 'error');
+        toast((result && result.message) || t('settings.autoUnlockUpdateFailed'), 'error');
       } else {
-        toast(enabled ? '已启用下次免密进入' : '已关闭下次免密进入', 'success');
+        toast(t(enabled ? 'settings.autoUnlockEnabled' : 'settings.autoUnlockDisabled'), 'success');
       }
     } catch (error) {
       autoUnlockInput.checked = !enabled;
-      toast(error.message || '无法更新免密设置', 'error');
+      toast(error.message || t('settings.autoUnlockUpdateFailed'), 'error');
     } finally {
       autoUnlockInput.disabled = !security.autoUnlockAvailable && !autoUnlockInput.checked;
     }
@@ -145,18 +170,18 @@ async function openSettings() {
   dom.modalRoot.querySelector('#saveSettings').addEventListener('click', async (event) => {
     const nickname = nicknameInput.value.trim();
     if (!nickname) {
-      toast('昵称不能为空', 'warn');
+      toast(t('settings.nicknameRequired'), 'warn');
       nicknameInput.focus();
       return;
     }
     const button = event.currentTarget;
     button.disabled = true;
-    button.textContent = '保存中…';
+    button.textContent = t('settings.saving');
     const lanEnabled = lanEnabledInput.checked;
     if (!lanEnabled && !state.settings.hubEnabled) {
-      toast('至少启用局域网发现或 Hub 服务器之一', 'warn');
+      toast(t('settings.requireNetwork'), 'warn');
       button.disabled = false;
-      button.textContent = '保存设置';
+      button.textContent = t('settings.save');
       return;
     }
     const patch = {
@@ -170,11 +195,11 @@ async function openSettings() {
       await window.feige.updateSettings(patch);
       state.settings = { ...state.settings, ...patch };
       closeModal(false);
-      toast('设置已保存', 'success');
+      toast(t('settings.saved'), 'success');
     } catch (error) {
       button.disabled = false;
-      button.textContent = '保存设置';
-      toast(error.message || '保存失败', 'error');
+      button.textContent = t('settings.save');
+      toast(error.message || t('settings.saveFailed'), 'error');
     }
   });
 
@@ -221,7 +246,7 @@ function updateHubRow() {
   inlineEl.hidden = !enabled;
   detailEl.textContent = url
     ? `${url}${stun ? ` · ${stun}` : ''}`
-    : '尚未配置服务器地址';
+    : t('settings.hub.notConfigured');
   detailEl.title = detailEl.textContent;
 }
 
@@ -245,7 +270,7 @@ async function applyHubPatch(patch, message) {
     state.settings = { ...state.settings, ...(settings || patch) };
     toast(message, 'success');
   } catch (error) {
-    toast(error.message || '服务器设置失败', 'error');
+    toast(error.message || t('settings.hub.updateFailed'), 'error');
   } finally {
     setHubRowBusy(false);
   }
@@ -259,7 +284,7 @@ async function toggleHub(enabled) {
   }
   await applyHubPatch(
     { hubEnabled: !!enabled },
-    enabled ? '公网服务器已启动' : '公网服务器已关闭',
+    t(enabled ? 'settings.hub.started' : 'settings.hub.stopped'),
   );
 }
 
@@ -279,30 +304,30 @@ function openHubEditor(options = {}) {
   overlay.className = 'modal-backdrop modal-backdrop-secondary';
   overlay.dataset.hubBackdrop = '';
   overlay.innerHTML = `
-    <div class="modal modal-secondary" role="dialog" aria-modal="true" aria-label="公网服务器">
+    <div class="modal modal-secondary" role="dialog" aria-modal="true" aria-label="${t('settings.hub.title')}">
       <div class="modal-head">
         <div>
-          <h3>公网服务器</h3>
-          <p>填写 Hub 地址；服务器只转发广播和 P2P 信令</p>
+          <h3>${t('settings.hub.title')}</h3>
+          <p>${t('settings.hub.description')}</p>
         </div>
-        <button class="modal-close" type="button" data-hub-cancel title="关闭">${icon('x', 17)}</button>
+        <button class="modal-close" type="button" data-hub-cancel title="${t('common.close')}">${icon('x', 17)}</button>
       </div>
       <div class="settings-grid">
         <label class="field">
-          <span>服务器地址</span>
+          <span>${t('settings.hub.urlLabel')}</span>
           <input class="input" id="hubModalUrl" maxlength="512" placeholder="wss://hub.example.com:8787" value="${escapeHtml(state.settings.hubUrl || '')}" />
-          <small>支持 ws:// / wss://。留空无法启动公网服务器。</small>
+          <small>${t('settings.hub.urlHint')}</small>
         </label>
         <label class="field">
-          <span>STUN 地址（可选）</span>
-          <input class="input" id="hubModalStun" maxlength="512" placeholder="留空使用服务器同主机 3478 端口" value="${escapeHtml(state.settings.hubStunUrl || '')}" />
-          <small>只在公网直连需要反射公网 UDP 地址时使用；不配置 TURN 中继。</small>
+          <span>${t('settings.hub.stunLabel')}</span>
+          <input class="input" id="hubModalStun" maxlength="512" placeholder="${t('settings.hub.stunPlaceholder')}" value="${escapeHtml(state.settings.hubStunUrl || '')}" />
+          <small>${t('settings.hub.stunHint')}</small>
         </label>
         <div class="form-error" id="hubModalError"></div>
       </div>
       <div class="modal-actions">
-        <button class="btn ghost" type="button" data-hub-cancel>取消</button>
-        <button class="btn primary" type="button" id="hubModalSave">${startAfterSave ? '保存并启动' : '保存'}</button>
+        <button class="btn ghost" type="button" data-hub-cancel>${t('common.cancel')}</button>
+        <button class="btn primary" type="button" id="hubModalSave">${t(startAfterSave ? 'settings.hub.saveAndStart' : 'common.save')}</button>
       </div>
     </div>`;
   dom.modalRoot.appendChild(overlay);
@@ -331,17 +356,17 @@ function openHubEditor(options = {}) {
     const hubUrl = cleanHubUrl(urlInput.value);
     const hubStunUrl = cleanStunUrl(stunInput.value);
     if (urlInput.value.trim() && !hubUrl) {
-      errorEl.textContent = '服务器地址必须是 ws:// 或 wss://';
+      errorEl.textContent = t('settings.hub.urlInvalid');
       urlInput.focus();
       return;
     }
     if (stunInput.value.trim() && !hubStunUrl) {
-      errorEl.textContent = 'STUN 地址必须是 stun://';
+      errorEl.textContent = t('settings.hub.stunInvalid');
       stunInput.focus();
       return;
     }
     if (!hubUrl) {
-      errorEl.textContent = '请填写服务器地址';
+      errorEl.textContent = t('settings.hub.urlRequired');
       urlInput.focus();
       return;
     }
@@ -349,17 +374,17 @@ function openHubEditor(options = {}) {
     const patch = { hubUrl, hubStunUrl };
     if (startAfterSave) patch.hubEnabled = true;
     saveButton.disabled = true;
-    saveButton.textContent = '保存中…';
+    saveButton.textContent = t('settings.saving');
     try {
       const settings = await window.feige.updateSettings(patch);
       state.settings = { ...state.settings, ...(settings || patch) };
       close();
       updateHubRow();
-      toast(startAfterSave ? '公网服务器已启动' : '服务器配置已保存', 'success');
+      toast(t(startAfterSave ? 'settings.hub.started' : 'settings.hub.saved'), 'success');
     } catch (error) {
-      errorEl.textContent = error.message || '保存失败';
+      errorEl.textContent = error.message || t('settings.saveFailed');
       saveButton.disabled = false;
-      saveButton.textContent = startAfterSave ? '保存并启动' : '保存';
+      saveButton.textContent = t(startAfterSave ? 'settings.hub.saveAndStart' : 'common.save');
     }
   });
 

@@ -65,6 +65,8 @@ contextBridge.exposeInMainWorld('feige', {
   openExternal: (url) => invoke('feige:open-external', url),
   showInFolder: (target) => invoke('feige:show-in-folder', target),
   getVersion: () => invoke('feige:version'),
+  getLanguage: () => invoke('feige:get-language'),
+  setLanguage: (language) => invoke('feige:set-language', language),
 
   pathForFile: (file) => {
     try {

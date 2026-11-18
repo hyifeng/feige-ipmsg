@@ -1,5 +1,7 @@
 'use strict';
 
+const { t } = require('../i18n');
+
 const fs = require('node:fs');
 const fsp = require('node:fs/promises');
 const path = require('node:path');
@@ -22,9 +24,9 @@ class OutgoingNode extends MessagingNode {
   }
 
   async sendPaths(peerKey, paths, caption = '', options = {}) {
-    if (!this.online) throw new Error('已下线，上线后才能发送文件');
+    if (!this.online) throw new Error(t('main.network.error.offlineSendFile'));
     const peer = this._requirePeer(peerKey);
-    if (!Array.isArray(paths) || paths.length === 0) throw new Error('请选择要发送的文件或文件夹');
+    if (!Array.isArray(paths) || paths.length === 0) throw new Error(t('main.network.error.choosePaths'));
 
     // 文件报价、清单和文件内容都只走加密会话；没有会话时先自动建立
     // 临时加密会话。已认证联系人会走 pairing key 自动恢复。
@@ -34,9 +36,9 @@ class OutgoingNode extends MessagingNode {
     for (const input of paths) {
       files.push(...(await this._collectPath(input)));
     }
-    if (!files.length) throw new Error('没有可发送的文件');
+    if (!files.length) throw new Error(t('main.error.noFiles'));
     if (files.length > MAX_ATTACH_FILES) {
-      throw new Error(`单次传输最多支持 ${MAX_ATTACH_FILES} 个条目`);
+      throw new Error(t('main.network.error.tooManyEntries', { count: MAX_ATTACH_FILES }));
     }
     if (options.image && files.length === 1) {
       const originalExt = path.extname(files[0].name);
@@ -55,7 +57,7 @@ class OutgoingNode extends MessagingNode {
     const totalDirs = files.filter((file) => file.dir).length;
     const totalEntries = files.length;
     const tops = new Set(files.map((file) => topSegment(file.relPath)));
-    const rootName = tops.size === 1 ? [...tops][0] : (files[0] && files[0].name) || '文件';
+    const rootName = tops.size === 1 ? [...tops][0] : (files[0] && files[0].name) || t('main.common.file');
     const isFolder = tops.size === 1 && files.some((file) => file.dir || file.relPath.includes('/'));
     // 报价只放摘要 + 前 8 项预览；较大目录在接收方确认后经加密通道拉取完整清单。
     const useManifest = totalEntries > PREVIEW_FILES;
@@ -148,7 +150,7 @@ class OutgoingNode extends MessagingNode {
         kind: 'image',
         at: record.createdAt,
         text: captionText,
-        name: first ? first.name : '图片',
+        name: first ? first.name : t('main.common.image'),
         size: first ? first.size : 0,
         thumb: imageThumb,
         localPath: first ? record.pathMap.get(first.id) : null,
@@ -216,7 +218,7 @@ class OutgoingNode extends MessagingNode {
     try {
       for await (const chunk of stream) {
         if (record.status === 'canceled' || record.status === 'error' || record.status === 'done') break;
-        if (!this.secure.isActive(peerKey)) throw new Error('加密会话已断开');
+        if (!this.secure.isActive(peerKey)) throw new Error(t('main.secure.error.sessionClosed'));
         await this.secure.send(peerKey, {
           type: 'file-chunk',
           transferId: record.id,
@@ -290,9 +292,9 @@ class OutgoingNode extends MessagingNode {
     try {
       stat = await fsp.lstat(absPath);
     } catch {
-      throw new Error(`无法读取：${path.basename(absPath)}`);
+      throw new Error(t('main.network.error.readPath', { name: path.basename(absPath) }));
     }
-    if (stat.isSymbolicLink()) throw new Error(`不支持符号链接：${path.basename(absPath)}`);
+    if (stat.isSymbolicLink()) throw new Error(t('main.network.error.symlink', { name: path.basename(absPath) }));
 
     const base = path.basename(absPath);
 
@@ -325,7 +327,7 @@ class OutgoingNode extends MessagingNode {
       }];
     }
 
-    throw new Error(`不支持的文件类型：${base}`);
+    throw new Error(t('main.network.error.unsupportedFileType', { name: base }));
   }
 }
 

@@ -1,10 +1,11 @@
 'use strict';
 
 const { ipcMain } = require('electron');
+const { t } = require('../../i18n');
 
 function registerSecureIpc(ctx) {
   ipcMain.handle('feige:secure-start', async (_event, peerKey) => {
-    if (!ctx.node) throw new Error('网络尚未就绪');
+    if (!ctx.node) throw new Error(t('main.error.networkNotReady'));
     return ctx.node.secure.start(String(peerKey || ''));
   });
 

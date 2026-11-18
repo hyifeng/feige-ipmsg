@@ -1,6 +1,7 @@
 'use strict';
 
 const fs = require('node:fs');
+const { t } = require('../i18n');
 const path = require('node:path');
 const crypto = require('node:crypto');
 
@@ -59,7 +60,11 @@ function loadOrCreateIdentity(directory, options = {}) {
   try {
     let raw = JSON.parse(fs.readFileSync(file, 'utf8'));
     if (isEnvelope(raw)) {
-      if (!key) throw new Error('身份密钥已加密，请先输入本地密码');
+      if (!key) {
+        const error = new Error(t('main.error.identityLocked'));
+        error.code = 'LOCAL_LOCKED';
+        throw error;
+      }
       raw = decryptJson(key, raw, AAD.IDENTITY);
     } else {
       legacy = true;
@@ -70,7 +75,7 @@ function loadOrCreateIdentity(directory, options = {}) {
       return { id: parsed.id, publicKey: parsed.publicKey, privateKey: parsed.privateKey };
     }
   } catch (error) {
-    if (error && (error.code === 'LOCAL_DECRYPT_FAILED' || /已加密|本地密码/.test(error.message))) {
+    if (error && (error.code === 'LOCAL_LOCKED' || error.code === 'LOCAL_DECRYPT_FAILED')) {
       throw error;
     }
     /* 首次运行或文件损坏 */

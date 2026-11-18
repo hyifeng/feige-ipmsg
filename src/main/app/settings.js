@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { DEFAULT_PORT } = require('../../shared/protocol');
+const { getLocale, t } = require('../i18n');
 
 // 旧版本使用 IPMsg 的 2425；升级后仅迁移仍停留在旧默认值的配置。
 const LEGACY_DEFAULT_PORT = 2425;
@@ -44,7 +45,7 @@ function cleanStunUrl(value) {
 function defaultSettings(ctx) {
   const { app } = ctx;
   const downloads = app.getPath('downloads') || path.join(os.homedir(), 'Downloads');
-  let username = '飞鸽用户';
+  let username = t('main.app.defaultUserName');
   try {
     username = os.userInfo().username || username;
   } catch {
@@ -53,7 +54,7 @@ function defaultSettings(ctx) {
   return {
     nickname: username,
     port: clampPort(process.env.FEIGE_PORT || DEFAULT_PORT),
-    downloadDir: path.join(downloads, '飞鸽接收'),
+    downloadDir: path.join(downloads, getLocale() === 'en' ? 'Feige Received' : '飞鸽接收'),
     autoAccept: false,
     sound: true,
     theme: 'dark',
@@ -100,12 +101,16 @@ function loadSettings(ctx) {
   try {
     raw = JSON.parse(fs.readFileSync(ctx.settingsPath, 'utf8'));
     if (isEnvelope(raw)) {
-      if (!ctx.localKey) throw new Error('本地配置已加密，请先输入本地密码');
+      if (!ctx.localKey) {
+        const error = new Error(t('main.error.settingsLocked'));
+        error.code = 'LOCAL_LOCKED';
+        throw error;
+      }
       raw = decryptJson(ctx.localKey, raw, AAD.SETTINGS);
     }
     if (!raw || typeof raw !== 'object') raw = {};
   } catch (error) {
-    if (error && (error.code === 'LOCAL_DECRYPT_FAILED' || /已加密|本地密码/.test(error.message))) {
+    if (error && (error.code === 'LOCAL_LOCKED' || error.code === 'LOCAL_DECRYPT_FAILED')) {
       throw error;
     }
     /* 首次运行或文件损坏时使用默认配置 */
@@ -144,12 +149,12 @@ function sanitizePatch(patch) {
   if (patch && typeof patch.hubEnabled === 'boolean') clean.hubEnabled = patch.hubEnabled;
   if (patch && patch.hubUrl != null) {
     const url = cleanHubUrl(patch.hubUrl);
-    if (String(patch.hubUrl || '').trim() && !url) throw new Error('服务器地址必须是 ws:// 或 wss://');
+    if (String(patch.hubUrl || '').trim() && !url) throw new Error(t('main.settings.invalidHubUrl'));
     clean.hubUrl = url;
   }
   if (patch && patch.hubStunUrl != null) {
     const url = cleanStunUrl(patch.hubStunUrl);
-    if (String(patch.hubStunUrl || '').trim() && !url) throw new Error('STUN 地址必须是 stun://');
+    if (String(patch.hubStunUrl || '').trim() && !url) throw new Error(t('main.settings.invalidStunUrl'));
     clean.hubStunUrl = url;
   }
   return clean;

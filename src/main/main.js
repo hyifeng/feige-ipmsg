@@ -5,9 +5,12 @@ const { app, BrowserWindow, powerMonitor, safeStorage } = require('electron');
 
 const { APP_NAME, DISCOVERY_PORT, DEMO } = require('./app/config');
 const { defaultSettings } = require('./app/settings');
+const { readLanguage } = require('./app/language');
+const { setLocale } = require('./i18n');
 const { showMainWindow, destroyTray } = require('./app/shell');
 const { createWindow } = require('./app/window');
 const { registerLocalPassIpc } = require('./app/ipc/local-pass');
+const { registerLanguageIpc } = require('./app/ipc/language');
 const { LocalPass } = require('./security/local-pass');
 const { AutoUnlockStore } = require('./security/auto-unlock');
 const { createIdentity } = require('../shared/protocol/identity');
@@ -52,6 +55,9 @@ function announceNodeOffline() {
 async function initialize() {
   const userData = app.getPath('userData');
   ctx.settingsPath = path.join(userData, 'settings.json');
+  setLocale(readLanguage(app));
+
+  registerLanguageIpc(ctx);
 
   if (ctx.demo) {
     // 演示模式只用于界面预览，不读写加密资料，也不启动网络服务。

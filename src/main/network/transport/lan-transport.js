@@ -1,5 +1,7 @@
 'use strict';
 
+const { t } = require('../../i18n');
+
 const dgram = require('node:dgram');
 const net = require('node:net');
 const { EventEmitter } = require('node:events');
@@ -114,7 +116,7 @@ class LanTransport extends EventEmitter {
 
   connectStream(peerKey, purpose, meta = {}) {
     const endpoint = this._endpoint(this.getPeer(peerKey));
-    if (!endpoint) throw new Error('对方不在线');
+    if (!endpoint) throw new Error(t('main.error.peerOffline'));
     const port = Number(meta.port) || endpoint.port;
     const socket = net.connect({ host: endpoint.ip, port });
     socket.setNoDelay(true);

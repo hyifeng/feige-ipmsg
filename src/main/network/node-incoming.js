@@ -1,5 +1,7 @@
 'use strict';
 
+const { t } = require('../i18n');
+
 const fs = require('node:fs');
 const fsp = require('node:fs/promises');
 const path = require('node:path');
@@ -16,9 +18,9 @@ const { safeRelPath, topSegment, normalizeFiles, uniqueTopNames, replaceTopSegme
 
 class IncomingNode extends OutgoingNode {
   async acceptOffer(offerId, saveDir = '') {
-    if (!this.online) throw new Error('已下线，上线后才能接收文件');
+    if (!this.online) throw new Error(t('main.network.error.offlineReceiveFile'));
     const offer = this.incomingOffers.get(offerId);
-    if (!offer) throw new Error('传输请求不存在或已失效');
+    if (!offer) throw new Error(t('main.network.error.offerInvalid'));
     if (offer.accepted) {
       const existing = this.incomingTransfers.get(offerId);
       return existing ? this._snapshot(existing) : null;
@@ -26,20 +28,20 @@ class IncomingNode extends OutgoingNode {
     offer.accepted = true;
 
     try {
-      if (!this.secure.isActive(offer.peerKey)) throw new Error('加密会话已断开，请重新建立加密会话');
+      if (!this.secure.isActive(offer.peerKey)) throw new Error(t('main.network.error.encryptedSessionClosed'));
       // 大目录的完整清单也走当前加密通道。
       let sourceFiles = offer.files;
       if (offer.needsManifest) {
         const manifest = await this._fetchSecureManifest(offer);
         sourceFiles = normalizeFiles(manifest, MAX_ATTACH_FILES);
       }
-      if (!sourceFiles.length) throw new Error('文件列表为空');
+      if (!sourceFiles.length) throw new Error(t('main.network.error.emptyFileList'));
 
       const totalBytes = sourceFiles.reduce((sum, file) => sum + (file.dir ? 0 : file.size), 0);
       const totalFiles = sourceFiles.filter((file) => !file.dir).length;
       const totalDirs = sourceFiles.filter((file) => file.dir).length;
       const totalEntries = sourceFiles.length;
-      const rootName = String(offer.rootName || '文件').slice(0, 255);
+      const rootName = String(offer.rootName || t('main.common.file')).slice(0, 255);
       const isFolder = !!offer.isFolder;
 
       const root = path.resolve(saveDir || this.downloadDir);
@@ -117,7 +119,7 @@ class IncomingNode extends OutgoingNode {
         if (file.dir) record.completedFiles += 1;
       }
 
-      if (!record.files.length) throw new Error('文件列表为空');
+      if (!record.files.length) throw new Error(t('main.network.error.emptyFileList'));
 
       for (const file of record.files) {
         if (file.dir) {
@@ -157,7 +159,7 @@ class IncomingNode extends OutgoingNode {
     const outgoing = this.outgoingTransfers.get(transferId);
     if (outgoing && outgoing.status !== 'done' && outgoing.status !== 'canceled') {
       outgoing.status = 'canceled';
-      outgoing.error = '已取消';
+      outgoing.error = t('main.transfer.canceled');
       this._sendRelease(outgoing.peerKey, transferId);
       for (const file of outgoing.files) {
         try {
@@ -178,7 +180,7 @@ class IncomingNode extends OutgoingNode {
     const incoming = this.incomingTransfers.get(transferId);
     if (incoming && incoming.status !== 'done' && incoming.status !== 'canceled') {
       incoming.status = 'canceled';
-      incoming.error = '已取消';
+      incoming.error = t('main.transfer.canceled');
       this._sendRelease(incoming.peerKey, transferId);
       for (const file of incoming.files) {
         try {
@@ -217,7 +219,7 @@ class IncomingNode extends OutgoingNode {
     const rootName = source.rootName.trim().slice(0, 255);
     const safePeer = peer || {
       key,
-      user: source.peerName || '未知联系人',
+      user: source.peerName || t('main.contact.unknown'),
       host: '',
       ip: '',
       port: 0,
@@ -254,7 +256,7 @@ class IncomingNode extends OutgoingNode {
         kind: 'image',
         at: offer.at,
         text: offer.text,
-        name: first ? first.name : '图片',
+        name: first ? first.name : t('main.common.image'),
         size: first ? first.size : 0,
         thumb: offer.thumb,
         transferId: offer.id,
@@ -296,17 +298,17 @@ class IncomingNode extends OutgoingNode {
 
   _fetchSecureManifest(offer) {
     if (!this.secure.isActive(offer.peerKey)) {
-      return Promise.reject(new Error('加密会话已断开'));
+      return Promise.reject(new Error(t('main.secure.error.sessionClosed')));
     }
     return new Promise((resolve, reject) => {
       const id = offer.id;
       if (this.secureManifestWaiters.has(id)) {
-        reject(new Error('文件清单请求重复'));
+        reject(new Error(t('main.network.error.manifestDuplicate')));
         return;
       }
       const timer = setTimeout(() => {
         this.secureManifestWaiters.delete(id);
-        reject(new Error('获取加密文件清单超时'));
+        reject(new Error(t('main.network.error.manifestTimeout')));
       }, 60000);
       const waiter = {
         peerKey: offer.peerKey,
@@ -334,7 +336,7 @@ class IncomingNode extends OutgoingNode {
     stream.on('finish', () => {
       if (record.status !== 'active' || file.done) return;
       if (file.received !== file.size) {
-        this._failIncoming(record, new Error('文件大小校验失败'));
+        this._failIncoming(record, new Error(t('main.network.error.fileSizeMismatch')));
         return;
       }
       this._completeIncomingFile(record, file);
@@ -349,13 +351,13 @@ class IncomingNode extends OutgoingNode {
     if (!file || file.done) return;
     const sequence = Number(payload.seq);
     if (!Number.isInteger(sequence) || sequence !== (file.secureSeq || 0)) {
-      this._failIncoming(record, new Error('加密文件分块顺序错误'));
+      this._failIncoming(record, new Error(t('main.network.error.chunkOrder')));
       return;
     }
     file.secureSeq = sequence + 1;
     const chunk = Buffer.from(String(payload.data || ''), 'base64');
     if (file.received + chunk.length > file.size) {
-      this._failIncoming(record, new Error('加密文件大小超出声明'));
+      this._failIncoming(record, new Error(t('main.network.error.chunkTooLarge')));
       return;
     }
     record.secure = true;
@@ -374,7 +376,7 @@ class IncomingNode extends OutgoingNode {
     const file = record.files.find((item) => item.id === String(payload.fileId || '') && !item.dir);
     if (!file || file.done || file.secureEnded) return;
     if (file.received !== file.size) {
-      this._failIncoming(record, new Error('加密文件大小不完整'));
+      this._failIncoming(record, new Error(t('main.network.error.chunkIncomplete')));
       return;
     }
     file.secureEnded = true;
@@ -405,9 +407,9 @@ class IncomingNode extends OutgoingNode {
 
   _requestFile(record, file) {
     const peer = this.peers.get(record.peerKey);
-    if (!peer || !peer.online) throw new Error('对方已离线');
+    if (!peer || !peer.online) throw new Error(t('main.error.peerOffline'));
 
-    if (!this.secure.isActive(record.peerKey)) throw new Error('加密会话已断开');
+    if (!this.secure.isActive(record.peerKey)) throw new Error(t('main.secure.error.sessionClosed'));
     this.secure.send(record.peerKey, {
       type: 'file-request',
       transferId: record.id,

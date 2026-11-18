@@ -2,6 +2,7 @@
 
 const crypto = require('node:crypto');
 const { EventEmitter } = require('node:events');
+const { t } = require('../i18n');
 
 const {
   PROTOCOL_VERSION,
@@ -31,11 +32,11 @@ class SecureManager extends EventEmitter {
     super();
     this.identityKey = options.identityKey || null;
     if (!this.identityKey || !this.identityKey.id || !this.identityKey.privateKey) {
-      throw new Error('SecureManager 需要 Ed25519 身份密钥');
+      throw new Error(t('main.secure.error.needsIdentityKey'));
     }
     this.identity = String(options.identity || this.identityKey.id);
     if (this.identity !== this.identityKey.id) {
-      throw new Error('SecureManager 的 identity 与身份密钥不匹配');
+      throw new Error(t('main.secure.error.identityMismatch'));
     }
     this.user = String(options.user || '');
     this.host = String(options.host || '');
@@ -98,11 +99,11 @@ class SecureManager extends EventEmitter {
   }
 
   start(peerKey, options = {}) {
-    if (!this.selfOnline) throw new Error('当前已下线，上线后才能认证身份');
-    if (peerKey === `id:${this.identity}`) throw new Error('不能与自己建立认证会话');
+    if (!this.selfOnline) throw new Error(t('main.secure.error.selfOffline'));
+    if (peerKey === `id:${this.identity}`) throw new Error(t('main.secure.error.selfSession'));
     const peer = this.getPeer(peerKey);
-    if (!peer) throw new Error('对方不在线');
-    if (!peer.online) throw new Error('对方已离线');
+    if (!peer) throw new Error(t('main.error.peerOffline'));
+    if (!peer.online) throw new Error(t('main.error.peerOffline'));
     const current = this.sessions.get(peerKey);
     if (current) {
       // 在已运行的临时会话上显式点击“认证加密”时，通知双方进入 6 位码
@@ -134,7 +135,7 @@ class SecureManager extends EventEmitter {
     });
 
     if (typeof this.connectStream !== 'function') {
-      throw new Error('传输层未提供 connectStream');
+      throw new Error(t('main.secure.error.noConnectStream'));
     }
     const socket = this.connectStream(peerKey, 'secure-handshake', { timeout: 0, keepAlive: true });
     if (typeof socket.setNoDelay === 'function') socket.setNoDelay(true);
@@ -235,8 +236,8 @@ class SecureManager extends EventEmitter {
     const peer = {
       ...(existingPeer || {}),
       key: peerKey,
-      user: sanitizeField(header.fromUser, '未知联系人'),
-      host: sanitizeField(header.fromHost, '未知主机'),
+      user: sanitizeField(header.fromUser, t('main.contact.unknown')),
+      host: sanitizeField(header.fromHost, t('main.contact.unknownHost')),
       port: Number(header.fromPort) || 0,
       ip: (existingPeer && existingPeer.ip) || socket.remoteAddress || socket.peerAddress || '',
       online: true,
@@ -272,7 +273,7 @@ class SecureManager extends EventEmitter {
         peerKey,
         peerName: peer.user,
         code: 'no-pairing',
-        message: '对方尝试恢复身份认证，但本机没有保存该联系人的认证密钥；请让对方在其本机选择重新认证。',
+        message: t('main.secure.warning.noPairing'),
         canReset: false,
       });
       return;
@@ -286,7 +287,7 @@ class SecureManager extends EventEmitter {
         peerKey,
         peerName: peer.user,
         code: 'pairing-exists',
-        message: '对方发起认证，但本机仍保存旧认证。请点击「重新认证」解除本机旧认证并重新建立。',
+        message: t('main.secure.warning.pairingExists'),
         canReset: true,
       });
       return;
@@ -403,7 +404,7 @@ class SecureManager extends EventEmitter {
 
   async send(peerKey, payload) {
     const session = this.sessions.get(peerKey);
-    if (!session || !session.active) throw new Error('加密会话未建立');
+    if (!session || !session.active) throw new Error(t('main.secure.error.sessionNotEstablished'));
     return this._sendEncrypted(session, payload);
   }
 
@@ -446,7 +447,7 @@ class SecureManager extends EventEmitter {
     const session = {
       sessionId: crypto.randomBytes(12).toString('hex'),
       peerKey,
-      peerName: peer.user || '未知联系人',
+      peerName: peer.user || t('main.contact.unknown'),
       peerInfo: peer,
       role,
       mode,
@@ -600,7 +601,7 @@ class SecureManager extends EventEmitter {
           peerKey: session.peerKey,
           peerName: session.peerName,
           code: 'auth-failed',
-          message: '身份认证失败，可能是双方认证密钥不一致；如双方都提示失败，请双方都在本机选择重新认证。',
+          message: t('main.secure.warning.authFailed'),
           canReset: true,
         });
         this._failSession(session, '加密密钥校验失败', { pairingKeep: true, graceful: true });
@@ -628,11 +629,11 @@ class SecureManager extends EventEmitter {
       this.autoPaused.add(session.peerKey);
     }
     const messages = {
-      'no-pairing': '对方没有保存配对密钥；本机仍保存配对，请选择重新认证。',
-      'pairing-exists': '对方仍保存旧认证，已拒绝本次认证；请等待对方在本机点击「重新认证」。',
-      'auth-failed': '身份认证失败；如双方都提示失败，请双方都在本机选择重新认证。',
+      'no-pairing': t('main.secure.message.noPairing'),
+      'pairing-exists': t('main.secure.message.pairingExists'),
+      'auth-failed': t('main.secure.message.authFailed'),
     };
-    const message = messages[code] || String(frame.message || code || '对方拒绝了身份认证');
+    const message = messages[code] || String(frame.message || code || t('main.secure.message.peerRejected'));
     if (code === 'no-pairing' || code === 'auth-failed' || code === 'pairing-exists') {
       this.emit('warning', {
         peerKey: session.peerKey,
@@ -956,7 +957,7 @@ class SecureManager extends EventEmitter {
     try {
       this.store.set(session.peerKey, { key: session.pairingKey, user: session.peerName });
     } catch (error) {
-      this.emit('warning', { peerKey: session.peerKey, message: `保存加密配对失败：${error.message || error}` });
+      this.emit('warning', { peerKey: session.peerKey, message: t('main.secure.warning.savePairingFailed', { error: error.message || error }) });
     }
     this.emit('authenticated', {
       sessionId: session.sessionId,
@@ -991,7 +992,7 @@ class SecureManager extends EventEmitter {
       try {
         this.store.set(session.peerKey, { key: session.pairingKey, user: session.peerName });
       } catch (error) {
-        this.emit('warning', { peerKey: session.peerKey, message: `保存加密配对失败：${error.message || error}` });
+        this.emit('warning', { peerKey: session.peerKey, message: t('main.secure.warning.savePairingFailed', { error: error.message || error }) });
       }
     }
     try {
@@ -1016,7 +1017,7 @@ class SecureManager extends EventEmitter {
 
   _sendEncrypted(session, payload) {
     if (!session || !session.keys || !session.frame) {
-      return Promise.reject(new Error('加密会话未就绪'));
+      return Promise.reject(new Error(t('main.secure.error.sessionNotReady')));
     }
     const counter = session.sendCounter;
     const frame = encryptFrame(session.keys.sendKey, session.keys.sendNoncePrefix, counter, payload);

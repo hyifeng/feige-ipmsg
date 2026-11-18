@@ -1,3 +1,5 @@
+import { getLocale, t } from '../i18n/index.js';
+
 const ESCAPE = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 
 const FILE_GROUPS = {
@@ -64,22 +66,26 @@ function dayKey(timestamp) {
   return new Date(timestamp).toDateString();
 }
 
+function monthDayLabel(timestamp) {
+  const locale = getLocale() === 'en' ? 'en-US' : 'zh-CN';
+  return new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }).format(new Date(timestamp));
+}
+
 function dayLabel(timestamp) {
-  const date = new Date(timestamp);
   const today = new Date();
   const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
-  if (dayKey(timestamp) === dayKey(today.getTime())) return '今天';
-  if (dayKey(timestamp) === dayKey(yesterday.getTime())) return '昨天';
-  return `${date.getMonth() + 1} 月 ${date.getDate()} 日`;
+  if (dayKey(timestamp) === dayKey(today.getTime())) return t('common.time.today');
+  if (dayKey(timestamp) === dayKey(yesterday.getTime())) return t('common.time.yesterday');
+  return monthDayLabel(timestamp);
 }
 
 function relativeTime(timestamp) {
   if (!timestamp) return '';
   const diff = Date.now() - timestamp;
-  if (diff < 60 * 1000) return '刚刚';
-  if (diff < 60 * 60 * 1000) return `${Math.floor(diff / 60000)} 分钟前`;
-  if (diff < 24 * 60 * 60 * 1000) return `${Math.floor(diff / 3600000)} 小时前`;
-  return `${new Date(timestamp).getMonth() + 1} 月 ${new Date(timestamp).getDate()} 日`;
+  if (diff < 60 * 1000) return t('common.time.justNow');
+  if (diff < 60 * 60 * 1000) return t('common.time.minutesAgo', { count: Math.floor(diff / 60000) });
+  if (diff < 24 * 60 * 60 * 1000) return t('common.time.hoursAgo', { count: Math.floor(diff / 3600000) });
+  return monthDayLabel(timestamp);
 }
 
 function fileInfo(name, isDirectory) {
@@ -107,17 +113,17 @@ function transferShortState(transfer) {
   if (!transfer) return '';
   switch (transfer.status) {
     case 'waiting':
-      return transfer.direction === 'out' ? '等待接收' : '待接收';
+      return t(transfer.direction === 'out' ? 'common.status.waitingToReceive' : 'common.status.pending');
     case 'active':
-      return '传输中';
+      return t('common.status.transferring');
     case 'done':
-      return transfer.direction === 'out' ? '已发送' : '已接收';
+      return t(transfer.direction === 'out' ? 'common.status.sent' : 'common.status.received');
     case 'declined':
-      return transfer.direction === 'out' ? '被拒绝' : '已拒绝';
+      return t(transfer.direction === 'out' ? 'common.status.rejected' : 'common.status.declined');
     case 'canceled':
-      return '已取消';
+      return t('common.status.canceled');
     case 'error':
-      return '失败';
+      return t('common.status.failed');
     default:
       return '';
   }
@@ -127,17 +133,17 @@ function transferDetails(transfer) {
   if (!transfer) return '';
   switch (transfer.status) {
     case 'waiting':
-      return `${formatBytes(transfer.totalBytes)} · 等待对方确认`;
+      return `${formatBytes(transfer.totalBytes)} · ${t('common.status.waitingForPeer')}`;
     case 'active':
       return `${formatBytes(transfer.doneBytes)} / ${formatBytes(transfer.totalBytes)}${transfer.speed ? ` · ${formatBytes(transfer.speed)}/s` : ''}`;
     case 'done':
-      return `${formatBytes(transfer.totalBytes)} · ${transfer.totalFiles || 0} 个文件`;
+      return t('transfer.detail.done', { size: formatBytes(transfer.totalBytes), count: transfer.totalFiles || 0 });
     case 'declined':
-      return '对方拒绝接收';
+      return t('transfer.peerDeclined');
     case 'canceled':
-      return '传输已取消';
+      return t('common.transferCanceled');
     case 'error':
-      return transfer.error || '传输失败';
+      return transfer.error || t('transfer.failed');
     default:
       return '';
   }

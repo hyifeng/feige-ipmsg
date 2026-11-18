@@ -1,9 +1,10 @@
 'use strict';
 
 const { ipcMain, dialog } = require('electron');
+const { t } = require('../../i18n');
 
 function requireNode(ctx) {
-  if (!ctx.node) throw new Error('网络尚未就绪');
+  if (!ctx.node) throw new Error(t('main.error.networkNotReady'));
   return ctx.node;
 }
 
@@ -17,8 +18,8 @@ function registerTransferIpc(ctx) {
     requireNode(ctx);
     const kind = payload.kind === 'folder' ? 'folder' : 'files';
     const result = await dialog.showOpenDialog(ctx.win, {
-      title: kind === 'folder' ? '选择要发送的文件夹' : '选择要发送的文件',
-      buttonLabel: '发送',
+      title: t(kind === 'folder' ? 'main.dialog.chooseFolderToSend' : 'main.dialog.chooseFilesToSend'),
+      buttonLabel: t('main.dialog.send'),
       properties: kind === 'folder' ? ['openDirectory'] : ['openFile', 'multiSelections'],
     });
     if (result.canceled || !result.filePaths.length) return null;
