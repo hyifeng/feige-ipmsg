@@ -514,7 +514,7 @@ export default {
   "settings.hub.urlLabel": "Server address",
   "settings.hub.urlRequired": "Enter a server address",
   "settings.language": "Language",
-  "settings.languageHint": "System default · English fallback",
+  "settings.languageSystem": "System",
   "settings.languageUpdateFailed": "Unable to change language",
   "settings.nickname": "My nickname",
   "settings.nicknameRequired": "Nickname cannot be empty",

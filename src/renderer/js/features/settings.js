@@ -19,6 +19,7 @@ async function openSettings() {
     /* 旧版本或不支持时保持关闭状态 */
   }
   const settings = state.settings;
+  const languagePreference = state.languagePreference || 'system';
   const autoUnlockHint = security.autoUnlockAvailable
     ? t('settings.rememberTheLocalDataKeyInThe')
     : (security.autoUnlockMessage || t('password.autoUnlock.unavailable'));
@@ -86,11 +87,11 @@ async function openSettings() {
           <div class="language-row">
             <div class="language-copy">
               <b>${icon('globe', 13)}<span>${t('settings.language')}</span></b>
-              <small>${t('settings.languageHint')}</small>
             </div>
             <div class="language-switch" role="group" aria-label="${t('settings.language')}">
-              <button class="language-switch-option ${getLocale() === 'zh-CN' ? 'is-active' : ''}" type="button" data-language="zh-CN" aria-pressed="${getLocale() === 'zh-CN'}">中文</button>
-              <button class="language-switch-option ${getLocale() === 'en' ? 'is-active' : ''}" type="button" data-language="en" aria-pressed="${getLocale() === 'en'}">English</button>
+              <button class="language-switch-option ${languagePreference === 'system' ? 'is-active' : ''}" type="button" data-language="system" aria-pressed="${languagePreference === 'system'}">${t('settings.languageSystem')}</button>
+              <button class="language-switch-option ${languagePreference === 'zh-CN' ? 'is-active' : ''}" type="button" data-language="zh-CN" aria-pressed="${languagePreference === 'zh-CN'}">中文</button>
+              <button class="language-switch-option ${languagePreference === 'en' ? 'is-active' : ''}" type="button" data-language="en" aria-pressed="${languagePreference === 'en'}">English</button>
             </div>
           </div>
         </div>
@@ -115,15 +116,23 @@ async function openSettings() {
   for (const button of languageButtons) {
     button.addEventListener('click', async () => {
       const requested = button.dataset.language;
-      if (requested === getLocale()) return;
-      const previous = getLocale();
+      if (requested === state.languagePreference) return;
+      const previousPreference = state.languagePreference;
+      const previousLocale = getLocale();
       for (const option of languageButtons) option.disabled = true;
       try {
-        const saved = await window.feige.setLanguage(requested);
-        setLocale(saved);
+        const result = await window.feige.setLanguage(requested);
+        if (typeof result === 'string') {
+          state.languagePreference = requested;
+          setLocale(result);
+        } else {
+          state.languagePreference = result.preference;
+          setLocale(result.locale);
+        }
         openSettings();
       } catch (error) {
-        setLocale(previous);
+        state.languagePreference = previousPreference;
+        setLocale(previousLocale);
         for (const option of languageButtons) option.disabled = false;
         toast(error.message || t('settings.languageUpdateFailed'), 'error');
       }

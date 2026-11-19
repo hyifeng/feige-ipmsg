@@ -44,6 +44,7 @@ const state = {
   modal: null,
   fatal: '',
   version: '1.0.0',
+  languagePreference: 'system',
   demo: false,
   sidebarDragDepth: 0,
 };

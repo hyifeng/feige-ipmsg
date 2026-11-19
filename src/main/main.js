@@ -5,7 +5,7 @@ const { app, BrowserWindow, powerMonitor, safeStorage } = require('electron');
 
 const { APP_NAME, DISCOVERY_PORT, DEMO } = require('./app/config');
 const { defaultSettings } = require('./app/settings');
-const { readLanguage } = require('./app/language');
+const { readLanguagePreference, resolveLanguage } = require('./app/language');
 const { setLocale } = require('./i18n');
 const { showMainWindow, destroyTray } = require('./app/shell');
 const { createWindow } = require('./app/window');
@@ -55,7 +55,8 @@ function announceNodeOffline() {
 async function initialize() {
   const userData = app.getPath('userData');
   ctx.settingsPath = path.join(userData, 'settings.json');
-  setLocale(readLanguage(app));
+  const languagePreference = readLanguagePreference(app);
+  setLocale(resolveLanguage(app, languagePreference));
 
   registerLanguageIpc(ctx);
 

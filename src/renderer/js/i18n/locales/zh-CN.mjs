@@ -514,7 +514,7 @@ export default {
   "settings.hub.urlLabel": "服务器地址",
   "settings.hub.urlRequired": "请填写服务器地址",
   "settings.language": "界面语言",
-  "settings.languageHint": "默认跟随系统，无法识别时使用英文",
+  "settings.languageSystem": "系统",
   "settings.languageUpdateFailed": "无法切换界面语言",
   "settings.nickname": "我的昵称",
   "settings.nicknameRequired": "昵称不能为空",

@@ -273,8 +273,7 @@ html[data-theme="light"] .modal {
   align-items: center;
   justify-content: space-between;
   gap: 18px;
-  margin-top: 2px;
-  padding-top: 14px;
+  padding-top: 12px;
   border-top: 1px solid var(--line);
 }
 
@@ -297,15 +296,6 @@ html[data-theme="light"] .modal {
 .language-copy b svg {
   color: var(--accent);
   opacity: 0.9;
-}
-
-.language-copy small {
-  overflow: hidden;
-  font-size: 10px;
-  line-height: 1.5;
-  color: var(--faint);
-  white-space: nowrap;
-  text-overflow: ellipsis;
 }
 
 .language-switch {

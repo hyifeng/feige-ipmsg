@@ -60,11 +60,19 @@ function cacheDom() {
 
 async function init() {
   let preferredLanguage = '';
+  let languagePreference = 'system';
   try {
-    preferredLanguage = window.feige ? await window.feige.getLanguage() : '';
+    const language = window.feige ? await window.feige.getLanguage() : null;
+    if (typeof language === 'string') {
+      preferredLanguage = language;
+    } else if (language) {
+      preferredLanguage = language.locale || '';
+      languagePreference = language.preference || 'system';
+    }
   } catch {
     /* 无法读取语言偏好时使用默认语言 */
   }
+  state.languagePreference = languagePreference;
   initI18n(preferredLanguage);
   cacheDom();
   hydrateIcons();
